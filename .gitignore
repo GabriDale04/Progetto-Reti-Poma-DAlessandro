@@ -1,2 +1,6 @@
 server/server
 client/client
+server/.vscode
+client/.vscode
+
+
