@@ -77,14 +77,9 @@ void parse_command(const char* input) {
     }
 }
 
-int main(int argc, char** argv) {
+int main() {
 
-    if (argc != 2) {
-        printf("No argument found!");
-        return 1;
-    }
-
-    char* input = strdup(argv[1]);
+    char* input = "moveLeft,10";
     parse_command(input);
 
     return 0;
