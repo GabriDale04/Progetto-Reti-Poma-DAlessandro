@@ -6,9 +6,25 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <termios.h>
 
 int** map;
 int client_socket;
+
+char readKey(void) {
+    struct termios oldt, newt;
+    char ch;
+    
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    
+    ch = getchar();
+    
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    return ch;
+}
 
 void error(const char *msg)
 {
@@ -70,7 +86,7 @@ void sendMessage()
         error("ERROR writing to socket");
 }
 
-char* readMessage()
+void readMessage()
 {
     int n;
     char buffer[256];
@@ -79,8 +95,6 @@ char* readMessage()
     n = read(client_socket, buffer, 255);
     if (n < 0)
         error("ERROR reading from socket");
-
-    return buffer;
 }
 
 void mainLoop()
