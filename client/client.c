@@ -7,6 +7,8 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
+int** map;
+
 void setCursorPosition(int x, int y)
 {
     printf("\033[%d;%dH", x, y);
@@ -18,13 +20,29 @@ void clearScreen()
     printf("\033[H");
 }
 
+void printItem(int item)
+{
+    if (item == 0)
+        printf(" ");
+    else if (item == 1)
+        printf("\033[47m█\033[0m");
+    else if (item == 2)
+        printf("■");
+    else if (item == 3)
+        printf("\033[31m🍎\033[0m");
+    else if (item == 4)
+        printf("\033[33m🍌\033[0m");
+    else if (item == 5)
+        printf("\033[35m🍇\033[0m");
+}
+
 void printMap()
 {
     setCursorPosition(0, 0);
 
-    for (int r = 0; r < MAP_HEIGHT; r++)
+    for (int r = 0; r < 0; r++)
     {
-        for (int c = 0; c < MAP_WIDTH; c++)
+        for (int c = 0; c < 0; c++)
             printItem(map[r][c]);
         
         printf("\n");
@@ -41,11 +59,11 @@ int main(int argc, char *argv[])
 {
     int sockfd, portno, n;
     struct sockaddr_in serv_addr;
-    struct hostent *server;
+    struct hostent* server;
     char buffer[256];
 
-    if (argc < 3) {
-        fprintf(stderr, "usage %s hostname port\n", argv[0]);
+    if (argc < 4) {
+        fprintf(stderr, "Sintassi del comando:\n\tclient [SERVER_IP] [SERVER_PORT] [PLAYER_NAME]\n");
         exit(0);
     }
 
