@@ -6,17 +6,6 @@
 
 int** map;
 
-void setCursorPosition(int x, int y)
-{
-    printf("\033[%d;%dH", x, y);
-}
-
-void clearScreen()
-{
-    printf("\033[2J");
-    printf("\033[H");
-}
-
 void createMap()
 {
     map = (int**)calloc(MAP_HEIGHT, sizeof(int*));
@@ -46,23 +35,6 @@ void printItem(int item)
         printf("\033[35m🍇\033[0m");
 }
 
-void printMap()
-{
-    setCursorPosition(0, 0);
-
-    for (int r = 0; r < MAP_HEIGHT; r++)
-    {
-        for (int c = 0; c < MAP_WIDTH; c++)
-            printItem(map[r][c]);
-        
-        printf("\n");
-    }
-}
-
 int main() {
-    clearScreen();
-    createMap();
-    printMap();
-    
     return 0;
 }
