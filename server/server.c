@@ -1,20 +1,68 @@
 #include <stdio.h>
+#include <stdlib.h>
+
+#define MAP_WIDTH 70
+#define MAP_HEIGHT 20
+
+int** map;
+
+void setCursorPosition(int x, int y)
+{
+    printf("\033[%d;%dH", x, y);
+}
+
+void clearScreen()
+{
+    printf("\033[2J");
+    printf("\033[H");
+}
+
+void createMap()
+{
+    map = (int**)calloc(MAP_HEIGHT, sizeof(int*));
+
+    for (int i = 0; i < MAP_HEIGHT; i++)
+        map[i] = (int*)calloc(MAP_WIDTH, sizeof(int));
+    
+    for (int r = 0; r < MAP_HEIGHT; r++)
+        for (int c = 0; c < MAP_WIDTH; c++)
+            if (r == 0 || r == MAP_HEIGHT - 1 || c == 0 || c == MAP_WIDTH - 1)
+                map[r][c] = 1;
+}
 
 void printItem(int item)
 {
     if (item == 0)
         printf(" ");
     else if (item == 1)
-        printf("■");
+        printf("\033[47m█\033[0m");
     else if (item == 2)
-        printf("\033[31m🍎\033[0m");
+        printf("■");
     else if (item == 3)
-        printf("\033[33m🍌\033[0m");
+        printf("\033[31m🍎\033[0m");
     else if (item == 4)
+        printf("\033[33m🍌\033[0m");
+    else if (item == 5)
         printf("\033[35m🍇\033[0m");
 }
 
+void printMap()
+{
+    setCursorPosition(0, 0);
+
+    for (int r = 0; r < MAP_HEIGHT; r++)
+    {
+        for (int c = 0; c < MAP_WIDTH; c++)
+            printItem(map[r][c]);
+        
+        printf("\n");
+    }
+}
+
 int main() {
-    printf("Hello, I'm your server!\n");
+    clearScreen();
+    createMap();
+    printMap();
+    
     return 0;
 }
