@@ -132,7 +132,6 @@ int main(int argc, char *argv[])
         error("ERROR connecting");
     
     mainLoop();
-
     close(client_socket);
 
     return 0;
