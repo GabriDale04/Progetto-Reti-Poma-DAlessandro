@@ -8,8 +8,11 @@
 #include <netdb.h>
 #include <termios.h>
 
-int** map;
 int client_socket;
+
+int map_width;
+int map_height;
+int** map;
 
 char readKey() 
 {
@@ -110,6 +113,11 @@ void syncLoop()
     }
 }
 
+void getMapDimension()
+{
+    
+}
+
 int main(int argc, char *argv[])
 {
     struct sockaddr_in serv_addr;
@@ -149,6 +157,7 @@ int main(int argc, char *argv[])
     if (connect(client_socket, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0)
         error("ERROR connecting");
     
+    getMapDimension();
     syncLoop();
     close(client_socket);
 
