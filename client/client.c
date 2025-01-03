@@ -76,46 +76,40 @@ void printMap()
     }
 }
 
-void sendMessage(char* message)
+void sendCommand(char* message)
 {
-    int n;
-    char buffer[256];
+    int result = write(client_socket, message, strlen(message));
 
-    bzero(buffer, 256);
-
-    strncpy(buffer, message, 255);
-    buffer[255] = '\0';
-
-    n = write(client_socket, buffer, strlen(buffer));
-
-    if (n < 0)
+    if (result < 0)
         error("ERROR writing to socket");
 }
 
-void readMessage()
-{
-    int n;
-    char buffer[256];
-
-    bzero(buffer, 256);
-    n = read(client_socket, buffer, 255);
-
-    if (n < 0)
-        error("ERROR reading from socket");
-}
-
-void syncLoop()
+void mainloop()
 {
     while (1)
     {
-        sendMessage("sync");
-        readMessage();
+        //sendCommand("getmap");
+        //r();
     }
 }
 
 void getMapDimension()
 {
-    
+    sendCommand("getmapdimension");
+
+    int* dimension = (int*)malloc(2 * sizeof(int));
+    int result = read(client_socket, buffer, 255);
+
+    if (result < 0)
+    {
+        error("ERROR reading from socket");
+        free(dimension);
+    }
+
+    map_width = dimension[0];
+    map_height = dimension[1];
+
+    free(dimension);
 }
 
 int main(int argc, char *argv[])
@@ -158,7 +152,7 @@ int main(int argc, char *argv[])
         error("ERROR connecting");
     
     getMapDimension();
-    syncLoop();
+    mainloop();
     close(client_socket);
 
     return 0;
