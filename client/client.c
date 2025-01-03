@@ -11,7 +11,8 @@
 int** map;
 int client_socket;
 
-char readKey(void) {
+char readKey() 
+{
     struct termios oldt, newt;
     char ch;
     
@@ -72,16 +73,18 @@ void printMap()
     }
 }
 
-void sendMessage()
+void sendMessage(char* message)
 {
     int n;
     char buffer[256];
 
-    printf("Message: ");
     bzero(buffer, 256);
-    fgets(buffer, 255, stdin);
+
+    strncpy(buffer, message, 255);
+    buffer[255] = '\0';
 
     n = write(client_socket, buffer, strlen(buffer));
+
     if (n < 0)
         error("ERROR writing to socket");
 }
@@ -93,15 +96,16 @@ void readMessage()
 
     bzero(buffer, 256);
     n = read(client_socket, buffer, 255);
+
     if (n < 0)
         error("ERROR reading from socket");
 }
 
-void mainLoop()
+void syncLoop()
 {
     while (1)
     {
-        sendMessage();
+        sendMessage("sync");
         readMessage();
     }
 }
@@ -145,7 +149,7 @@ int main(int argc, char *argv[])
     if (connect(client_socket, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0)
         error("ERROR connecting");
     
-    mainLoop();
+    syncLoop();
     close(client_socket);
 
     return 0;
