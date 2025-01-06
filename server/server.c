@@ -178,7 +178,29 @@ void acceptloop(int serverSocket) {
         }
         else {
             pthread_create(&clientThread, NULL, &clientThreadHandler, &clientSocket);
+            break;
         }
+    }
+
+    while (1)
+    {
+        srand(time(NULL));
+
+        // Genera ogni 10 secondi un po' di frutta
+        for (int i = 0; i < 10; i++)
+        {
+            int x = rand() % MAP_WIDTH;
+            int y = rand() % MAP_HEIGHT;
+
+            if (map[y][x] == 0 && x + 1 < MAP_WIDTH && map[y][x + 1] == 0)
+            {
+                int fruit = 3 + rand() % (5 - 3 + 1);
+                map[y][x] = fruit;
+                map[y][x + 1] = fruit;
+            }
+        }
+
+        sleep(10);
     }
 }
 

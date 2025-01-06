@@ -65,6 +65,7 @@ void clearScreen()
 {
     printf("\033[2J");
     printf("\033[H");
+    fflush(stdout);
 }
 
 void printItem(int item)
@@ -72,9 +73,9 @@ void printItem(int item)
     if (item == 0)
         printf(" ");
     else if (item == 1)
-        printf("\033[47m█\033[0m");
+        printf("\033[37m█\033[0m");
     else if (item == 2)
-        printf("■");
+        printf("\033[37m■\033[0m");
     else if (item == 3)
         printf("\033[31m🍎\033[0m");
     else if (item == 4)
@@ -90,7 +91,14 @@ void printMap()
     for (int r = 0; r < map_height; r++)
     {
         for (int c = 0; c < map_width; c++)
-            printItem(map[r * map_width + c]);
+        {
+            int item = map[r * map_width + c];
+
+            printItem(item);
+
+            if (item >= 3 && item <= 5)
+                c++;
+        }
         
         printf("\n");
     }
