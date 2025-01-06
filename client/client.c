@@ -150,7 +150,7 @@ void mainloop()
 
     while (1)
     {   
-        //sendCommand("moveleft");
+        sendCommand("moveleft");
         getMapMatrix();
         usleep(250000);
     }

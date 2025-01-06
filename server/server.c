@@ -51,7 +51,7 @@ void createPlayer(int clientSocket, char* name) {
         players[i].clientSocket = clientSocket;
         players[i].name = name;
         players[i].posX = 45;
-        players[i].posY = 0;
+        players[i].posY = 10;
         players[i].points = 0;
     }
 
@@ -99,11 +99,11 @@ void moveLeft(int clientSocket) {
         int x = players[i].posX - 1;
         int y = players[i].posY;
 
-        if (x >= 0 && map[y][x] != 0) {
+        if (x >= 0 && map[y][x] != 1) {
             // inserire quì il controllo per i punti
 
             map[y][x] = 2;
-            map[y][x + 1] = 1;
+            map[y][x + 1] = 0;
             players[i].posX -= 1;
         }
     }
@@ -266,6 +266,8 @@ void createMap() {
         for (int c = 0; c < MAP_WIDTH; c++)
             if (r == 0 || r == MAP_HEIGHT - 1 || c == 0 || c == MAP_WIDTH - 1)
                 map[r][c] = 1;
+            else
+                map[r][c] = 0;
 }
 
 int main(int argc, char* argv[]) {
