@@ -49,11 +49,11 @@ void clearScreen()
 
 void printItem(int item)
 {
-    if (item == 0)
+    if (item == 0) // vuoto
         printf(" ");
-    else if (item == 1)
+    else if (item == 1) // muro
         printf("\033[47m█\033[0m");
-    else if (item == 2)
+    else if (item == 2) // player
         printf("■");
     else if (item == 3)
         printf("\033[31m🍎\033[0m");
@@ -84,14 +84,6 @@ void sendCommand(char* message)
         error("ERROR writing to socket");
 }
 
-void mainloop()
-{
-    while (1)
-    {
-        //sendCommand("getmapmatrix");
-        //r();
-    }
-}
 
 void getMapMatrix()
 {
@@ -108,7 +100,7 @@ void getMapMatrix()
         printf("\n");
     }
 
-    printMap();
+    //printMap();
 }
 
 void getMapDimension()
@@ -128,6 +120,17 @@ void getMapDimension()
     map_height = dimension[1];
 
     free(dimension);
+}
+
+void mainloop()
+{
+    while (1)
+    {
+        //sendCommand("moveLeft");
+        //getMapMatrix();
+        //r();
+
+    }
 }
 
 int main(int argc, char *argv[])
