@@ -13,18 +13,49 @@
 #define MAX_ARG_LEN 100
 #define MAX_ARG_COUNT 10
 
-int** map;
+int map[MAP_HEIGHT][MAP_WIDTH];
 
 void error(const char* msg) {
     perror(msg);
     exit(1);
 }
 
-void moveLeft(int distance) {
+void getMapDimension(int clientSocket)
+{
+    int mapDim[2] = { MAP_WIDTH, MAP_HEIGHT };
+
+    int result = write(clientSocket, &mapDim, sizeof(mapDim));
+
+    if (result < 0)
+        error("ERROR writing on socket");
+}
+
+void getMapMatrix(int clientSocket)
+{
+    int map_array[MAP_WIDTH * MAP_HEIGHT];
+    int k = 0;
+    
+    for (int i = 0; i < MAP_HEIGHT; i++) 
+    {
+        for (int j = 0; j < MAP_WIDTH; j++) 
+        {
+            map_array[k] = map[i][j];
+            k++;
+            printf("%d\n", map[i][j]);
+        }
+    }
+
+    int result = write(clientSocket, &map, MAP_WIDTH * MAP_HEIGHT * sizeof(int));
+
+    if (result < 0)
+        error("ERROR writing on socket");      
+}
+
+void moveLeft(int distance, int clientSocket) {
     printf("Eseguo movimento a sinistra di: %d\n", distance);
 }
 
-void moveRight(int distance) {
+void moveRight(int distance, int clientSocket) {
     printf("Eseguo movimento a destra di: %d\n", distance);
 }
 
@@ -69,7 +100,7 @@ void divide_input(const char* input, char* command, char arguments[][MAX_ARG_LEN
     }
 }
 
-void parse_command(const char* input) {
+void parse_command(const char* input, int clientSocket) {
     char command[MAX_COMMAND_LEN];
     char arguments[MAX_ARG_COUNT][MAX_ARG_LEN];
     int arg_count;
@@ -80,11 +111,17 @@ void parse_command(const char* input) {
     // Parsing del comando e ricerca di una funzione appropriata per gestirlo
     if (strcmp(command, "moveLeft") == 0) {
         int distance = atoi(arguments[0]);
-        moveLeft(distance);
+        moveLeft(distance, clientSocket);
     }
     else if (strcmp(command, "moveRight") == 0) {
         int distance = atoi(arguments[0]);
-        moveRight(distance);
+        moveRight(distance, clientSocket);
+    }
+    else if (strcmp(command, "getmapdimension") == 0) {
+        getMapDimension(clientSocket);
+    }
+    else if (strcmp(command, "getmapmatrix") == 0) {
+        getMapMatrix(clientSocket);
     }
     else {
         printf("Invalid command: %s\n", command);
@@ -115,14 +152,14 @@ void* clientThreadHandler(void* socket) {
         buffer[strcspn(buffer, "\n")] = 0; // Rimuovi il \n "newline" se presente
         printf("Here is the message: %s\n", buffer);
 
-        parse_command(buffer);
+        parse_command(buffer, clientSocket);
 
-        char response[] = "Message recived!";
-        int responseLength = strlen(response);
-        result = write(clientSocket, response, responseLength);
-        if (result < 0) {
-            error("ERROR writing to socket");
-        }
+        // char response[] = "Message recived!";
+        // int responseLength = strlen(response);
+        // result = write(clientSocket, response, responseLength);
+        // if (result < 0) {
+        //     error("ERROR writing to socket");
+        // }
     }
 
     close(clientSocket);
@@ -147,11 +184,6 @@ void acceptloop(int serverSocket) {
 }
 
 void createMap() {
-    map = (int**)calloc(MAP_HEIGHT, sizeof(int*));
-
-    for (int i = 0; i < MAP_HEIGHT; i++)
-        map[i] = (int*)calloc(MAP_WIDTH, sizeof(int));
-
     for (int r = 0; r < MAP_HEIGHT; r++)
         for (int c = 0; c < MAP_WIDTH; c++)
             if (r == 0 || r == MAP_HEIGHT - 1 || c == 0 || c == MAP_WIDTH - 1)
@@ -159,6 +191,7 @@ void createMap() {
 }
 
 int main(int argc, char* argv[]) {
+    createMap();
 
     if (argc < 2) {
         error("ERROR, no port provided");

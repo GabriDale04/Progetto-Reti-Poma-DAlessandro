@@ -12,7 +12,7 @@ int client_socket;
 
 int map_width;
 int map_height;
-int** map;
+int* map;
 
 char readKey() 
 {
@@ -67,10 +67,10 @@ void printMap()
 {
     setCursorPosition(0, 0);
 
-    for (int r = 0; r < 0; r++)
+    for (int r = 0; r < map_height; r++)
     {
-        for (int c = 0; c < 0; c++)
-            printItem(map[r][c]);
+        for (int c = 0; c < map_width; c++)
+            printItem(map[r * map_width + c]);
         
         printf("\n");
     }
@@ -88,9 +88,27 @@ void mainloop()
 {
     while (1)
     {
-        //sendCommand("getmap");
+        //sendCommand("getmapmatrix");
         //r();
     }
+}
+
+void getMapMatrix()
+{
+    sendCommand("getmapmatrix");
+
+    map = (int*)malloc(map_width * map_height * sizeof(int));
+    int result = read(client_socket, map, map_width * map_height * sizeof(int));
+
+    for (int i = 0; i < map_height; i++) {
+        for (int j = 0; j < map_width; j++) {
+            printf("%d ", map[i * map_width + j]);
+        }
+        
+        printf("\n");
+    }
+
+    printMap();
 }
 
 void getMapDimension()
@@ -98,7 +116,7 @@ void getMapDimension()
     sendCommand("getmapdimension");
 
     int* dimension = (int*)malloc(2 * sizeof(int));
-    int result = read(client_socket, buffer, 255);
+    int result = read(client_socket, dimension, 2 * sizeof(int));
 
     if (result < 0)
     {
@@ -152,6 +170,7 @@ int main(int argc, char *argv[])
         error("ERROR connecting");
     
     getMapDimension();
+    getMapMatrix();
     mainloop();
     close(client_socket);
 
