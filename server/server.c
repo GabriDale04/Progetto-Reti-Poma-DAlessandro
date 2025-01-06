@@ -50,10 +50,12 @@ void createPlayer(int clientSocket, char* name) {
     if(i < sizeof(players)) {
         players[i].clientSocket = clientSocket;
         players[i].name = name;
-        players[i].posX = 50;
+        players[i].posX = 45;
         players[i].posY = 0;
         players[i].points = 0;
     }
+
+    map[players[i].posY][players[i].posX] = 2;
 }
 
 void getMapDimension(int clientSocket)
@@ -77,7 +79,6 @@ void getMapMatrix(int clientSocket)
         {
             map_array[k] = map[i][j];
             k++;
-            //printf("%d\n", map[i][j]);
         }
     }
 
@@ -98,11 +99,11 @@ void moveLeft(int clientSocket) {
         int x = players[i].posX - 1;
         int y = players[i].posY;
 
-        if (x >= 0) {
+        if (x >= 0 && map[y][x] != 0) {
             // inserire quì il controllo per i punti
 
             map[y][x] = 2;
-            map[y][x + 1] = 2;
+            map[y][x + 1] = 1;
             players[i].posX -= 1;
         }
     }
@@ -162,11 +163,11 @@ void parse_command(const char* input, int clientSocket) {
     divide_input(input, command, arguments, &arg_count);
 
     // Parsing del comando e ricerca di una funzione appropriata per gestirlo
-    if (strcmp(command, "moveLeft") == 0) {
+    if (strcmp(command, "moveleft") == 0) {
         int distance = atoi(arguments[0]);
         moveLeft(clientSocket);
     }
-    else if (strcmp(command, "moveRight") == 0) {
+    else if (strcmp(command, "moveright") == 0) {
         int distance = atoi(arguments[0]);
         moveRight(distance, clientSocket);
     }
