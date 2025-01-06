@@ -7,17 +7,53 @@
 #include <netinet/in.h>
 #include <pthread.h>
 
+#define MAX_PLAYERS_COUNT 4
 #define MAP_WIDTH 70
 #define MAP_HEIGHT 20
 #define MAX_COMMAND_LEN 100
 #define MAX_ARG_LEN 100
 #define MAX_ARG_COUNT 10
 
+struct Player {
+    int clientSocket;
+    char* name;
+    int posX;
+    int posY;
+    int points;
+};
+
+struct Player players[MAX_PLAYERS_COUNT];
+
 int map[MAP_HEIGHT][MAP_WIDTH];
 
 void error(const char* msg) {
     perror(msg);
     exit(1);
+}
+
+void initializePlayers(){
+    for (int i = 0; i < sizeof(players); i++) {
+        players[i].clientSocket = -1;
+        players[i].name = "";
+        players[i].posX = 0;
+        players[i].posY = 0;
+        players[i].points = 0;
+    }
+}
+
+void createPlayer(int clientSocket, char* name) {
+    int i = 0;
+    while (i < sizeof(players) && players[i].clientSocket != -1) {
+        i++;
+    }
+
+    if(i < sizeof(players)) {
+        players[i].clientSocket = clientSocket;
+        players[i].name = name;
+        players[i].posX = 50;
+        players[i].posY = 0;
+        players[i].points = 0;
+    }
 }
 
 void getMapDimension(int clientSocket)
@@ -41,6 +77,7 @@ void getMapMatrix(int clientSocket)
         {
             map_array[k] = map[i][j];
             k++;
+            //printf("%d\n", map[i][j]);
         }
     }
 
@@ -50,8 +87,25 @@ void getMapMatrix(int clientSocket)
         error("ERROR writing on socket");      
 }
 
-void moveLeft(int distance, int clientSocket) {
-    printf("Eseguo movimento a sinistra di: %d\n", distance);
+void moveLeft(int clientSocket) {
+    int i = 0;
+    while (i < sizeof(players) && players[i].clientSocket != clientSocket) {
+        i++;
+    }
+
+    if(i < sizeof(players)) {
+
+        int x = players[i].posX - 1;
+        int y = players[i].posY;
+
+        if (x >= 0) {
+            // inserire quì il controllo per i punti
+
+            map[y][x] = 2;
+            map[y][x + 1] = 2;
+            players[i].posX -= 1;
+        }
+    }
 }
 
 void moveRight(int distance, int clientSocket) {
@@ -110,7 +164,7 @@ void parse_command(const char* input, int clientSocket) {
     // Parsing del comando e ricerca di una funzione appropriata per gestirlo
     if (strcmp(command, "moveLeft") == 0) {
         int distance = atoi(arguments[0]);
-        moveLeft(distance, clientSocket);
+        moveLeft(clientSocket);
     }
     else if (strcmp(command, "moveRight") == 0) {
         int distance = atoi(arguments[0]);
@@ -130,6 +184,8 @@ void parse_command(const char* input, int clientSocket) {
 void* clientThreadHandler(void* socket) {
     int* socketPtr = (unsigned int*)socket;
     int clientSocket = *socketPtr;
+
+    createPlayer(clientSocket, "nome");
 
     printf("Accepted new client\n");
 
@@ -212,6 +268,7 @@ void createMap() {
 }
 
 int main(int argc, char* argv[]) {
+    initializePlayers();
     createMap();
 
     if (argc < 2) {
@@ -242,6 +299,7 @@ int main(int argc, char* argv[]) {
     listen(serverSocket, 5);
 
     acceptloop(serverSocket);
+
 
     close(serverSocket);
 
