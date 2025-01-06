@@ -41,7 +41,6 @@ void getMapMatrix(int clientSocket)
         {
             map_array[k] = map[i][j];
             k++;
-            printf("%d\n", map[i][j]);
         }
     }
 

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
@@ -14,10 +15,10 @@ int map_width;
 int map_height;
 int* map;
 
-char readKey() 
+int readKey() 
 {
     struct termios oldt, newt;
-    char ch;
+    int ch;
     
     tcgetattr(STDIN_FILENO, &oldt);
     newt = oldt;
@@ -28,6 +29,25 @@ char readKey()
     
     tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
     return ch;
+}
+
+void* readKeyThreadDelegate()
+{
+    while (1)
+    {
+        int key = readKey();
+
+        if (key == 'w')
+            printf("moveup");
+        else if (key == 'a')
+            printf("moveleft");
+        else if (key == 's')
+            printf("movedown");
+        else if (key == 'd')
+            printf("moveright");
+
+        usleep(250000);
+    }
 }
 
 void error(const char *msg)
@@ -84,33 +104,6 @@ void sendCommand(char* message)
         error("ERROR writing to socket");
 }
 
-void mainloop()
-{
-    while (1)
-    {
-        //sendCommand("getmapmatrix");
-        //r();
-    }
-}
-
-void getMapMatrix()
-{
-    sendCommand("getmapmatrix");
-
-    map = (int*)malloc(map_width * map_height * sizeof(int));
-    int result = read(client_socket, map, map_width * map_height * sizeof(int));
-
-    for (int i = 0; i < map_height; i++) {
-        for (int j = 0; j < map_width; j++) {
-            printf("%d ", map[i * map_width + j]);
-        }
-        
-        printf("\n");
-    }
-
-    printMap();
-}
-
 void getMapDimension()
 {
     sendCommand("getmapdimension");
@@ -128,6 +121,30 @@ void getMapDimension()
     map_height = dimension[1];
 
     free(dimension);
+}
+
+void getMapMatrix()
+{
+    sendCommand("getmapmatrix");
+
+    map = (int*)malloc(map_width * map_height * sizeof(int));
+    int result = read(client_socket, map, map_width * map_height * sizeof(int));
+
+    printMap();
+}
+
+void mainloop()
+{
+    getMapDimension();
+
+    pthread_t keyThread;
+    pthread_create(&keyThread, NULL, readKeyThreadDelegate, NULL);
+
+    while (1)
+    {
+        getMapMatrix();
+        usleep(250000);
+    }
 }
 
 int main(int argc, char *argv[])
@@ -171,8 +188,6 @@ int main(int argc, char *argv[])
     if (connect(client_socket, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0)
         error("ERROR connecting");
     
-    getMapDimension();
-    getMapMatrix();
     mainloop();
     close(client_socket);
 
