@@ -70,11 +70,11 @@ void clearScreen()
 
 void printItem(int item)
 {
-    if (item == 0) // vuoto
+    if (item == 0)
         printf(" ");
-    else if (item == 1) // muro
+    else if (item == 1)
         printf("\033[47m█\033[0m");
-    else if (item == 2) // player
+    else if (item == 2)
         printf("■");
     else if (item == 3)
         printf("\033[31m🍎\033[0m");
@@ -112,25 +112,6 @@ void sendCommand(char* message)
         error("ERROR writing to socket");
 }
 
-
-void getMapMatrix()
-{
-    sendCommand("getmapmatrix");
-
-    map = (int*)malloc(map_width * map_height * sizeof(int));
-    int result = read(client_socket, map, map_width * map_height * sizeof(int));
-
-    for (int i = 0; i < map_height; i++) {
-        for (int j = 0; j < map_width; j++) {
-            printf("%d ", map[i * map_width + j]);
-        }
-        
-        printf("\n");
-    }
-
-    //printMap();
-}
-
 void getMapDimension()
 {
     sendCommand("getmapdimension");
@@ -150,14 +131,28 @@ void getMapDimension()
     free(dimension);
 }
 
+void getMapMatrix()
+{
+    sendCommand("getmapmatrix");
+
+    map = (int*)malloc(map_width * map_height * sizeof(int));
+    int result = read(client_socket, map, map_width * map_height * sizeof(int));
+
+    printMap();
+}
+
 void mainloop()
 {
-    while (1)
-    {
-        //sendCommand("moveLeft");
-        //getMapMatrix();
-        //r();
+    getMapDimension();
 
+    pthread_t keyThread;
+    pthread_create(&keyThread, NULL, readKeyThreadDelegate, NULL);
+
+    while (1)
+    {   
+        //sendCommand("moveleft");
+        getMapMatrix();
+        usleep(250000);
     }
 }
 
