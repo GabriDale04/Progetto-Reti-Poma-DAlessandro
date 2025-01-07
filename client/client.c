@@ -9,6 +9,13 @@
 #include <netdb.h>
 #include <termios.h>
 
+#define EMPTY_ITEM 0
+#define WALL_ITEM 1
+#define PLAYER_ITEM 2
+#define APPLE_ITEM 3
+#define BANANA_ITEM 5
+#define GRAPE_ITEM 7
+
 int client_socket;
 
 int map_width;
@@ -70,17 +77,17 @@ void clearScreen()
 
 void printItem(int item)
 {
-    if (item == 0)
+    if (item == EMPTY_ITEM)
         printf(" ");
-    else if (item == 1)
+    else if (item == WALL_ITEM)
         printf("\033[47m█\033[0m");
-    else if (item == 2)
+    else if (item == PLAYER_ITEM)
         printf("■");
-    else if (item == 3)
+    else if (item == APPLE_ITEM)
         printf("\033[31m🍎\033[0m");
-    else if (item == 4)
+    else if (item == BANANA_ITEM)
         printf("\033[33m🍌\033[0m");
-    else if (item == 5)
+    else if (item == GRAPE_ITEM)
         printf("\033[35m🍇\033[0m");
 }
 
@@ -96,7 +103,7 @@ void printMap()
 
             printItem(item);
 
-            if (item >= 3 && item <= 5)
+            if (item == APPLE_ITEM || item == BANANA_ITEM || item == GRAPE_ITEM)
                 c++;
         }
         

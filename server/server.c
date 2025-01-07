@@ -241,6 +241,8 @@ void acceptloop(int serverSocket) {
 
     while (1)
     {
+        int fruits[] = { 3, 5, 7 };
+
         srand(time(NULL));
 
         // Genera ogni 10 secondi un po' di frutta
@@ -251,9 +253,9 @@ void acceptloop(int serverSocket) {
 
             if (map[y][x] == 0 && x + 1 < MAP_WIDTH && map[y][x + 1] == 0)
             {
-                int fruit = 3 + rand() % (5 - 3 + 1);
-                map[y][x] = fruit;
-                map[y][x + 1] = fruit;
+                int fruit = rand() % 3;
+                map[y][x] = fruits[fruit];
+                map[y][x + 1] = fruits[fruit + 1];
             }
         }
 
