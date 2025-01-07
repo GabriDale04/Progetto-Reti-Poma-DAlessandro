@@ -22,6 +22,22 @@ int map_width;
 int map_height;
 int* map;
 
+pthread_mutex_t lock;
+
+void error(const char *msg)
+{
+    perror(msg);
+    exit(0);
+}
+
+void sendCommand(char* message)
+{
+    int result = write(client_socket, message, strlen(message));
+
+    if (result < 0)
+        error("ERROR writing to socket");
+}
+
 int readKey() 
 {
     struct termios oldt, newt;
@@ -44,23 +60,21 @@ void* readKeyThreadDelegate()
     {
         int key = readKey();
 
+        pthread_mutex_unlock(&lock);
+
         if (key == 'w')
             printf("moveup");
         else if (key == 'a')
-            printf("moveleft");
+            sendCommand("moveleft");
         else if (key == 's')
             printf("movedown");
         else if (key == 'd')
             printf("moveright");
 
+        pthread_mutex_unlock(&lock);
+
         usleep(250000);
     }
-}
-
-void error(const char *msg)
-{
-    perror(msg);
-    exit(0);
 }
 
 void setCursorPosition(int x, int y)
@@ -111,14 +125,6 @@ void printMap()
     }
 }
 
-void sendCommand(char* message)
-{
-    int result = write(client_socket, message, strlen(message));
-
-    if (result < 0)
-        error("ERROR writing to socket");
-}
-
 void getMapDimension()
 {
     sendCommand("getmapdimension");
@@ -157,14 +163,19 @@ void mainloop()
 
     while (1)
     {   
-        sendCommand("moveleft");
+        pthread_mutex_lock(&lock);
+
         getMapMatrix();
+
+        pthread_mutex_unlock(&lock);
+
         usleep(250000);
     }
 }
 
 int main(int argc, char *argv[])
 {
+    pthread_mutex_init(&lock, NULL);
     clearScreen();
 
     struct sockaddr_in serv_addr;
@@ -206,6 +217,7 @@ int main(int argc, char *argv[])
     
     mainloop();
     close(client_socket);
+    pthread_mutex_destroy(&lock);
 
     return 0;
 }
