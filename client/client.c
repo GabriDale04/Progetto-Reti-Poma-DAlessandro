@@ -63,17 +63,17 @@ void* readKeyThreadDelegate()
         pthread_mutex_unlock(&lock);
 
         if (key == 'w')
-            printf("moveup");
+            sendCommand("moveup");
         else if (key == 'a')
             sendCommand("moveleft");
         else if (key == 's')
-            printf("movedown");
+            sendCommand("movedown");
         else if (key == 'd')
-            printf("moveright");
+            sendCommand("moveright");
 
         pthread_mutex_unlock(&lock);
 
-        usleep(250000);
+        usleep(50000);
     }
 }
 

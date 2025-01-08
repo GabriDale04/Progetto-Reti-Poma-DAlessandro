@@ -7,6 +7,13 @@
 #include <netinet/in.h>
 #include <pthread.h>
 
+#define EMPTY_ITEM 0
+#define WALL_ITEM 1
+#define PLAYER_ITEM 2
+#define APPLE_ITEM 3
+#define BANANA_ITEM 5
+#define GRAPE_ITEM 7
+
 #define MAX_PLAYERS_COUNT 4
 #define MAP_WIDTH 70
 #define MAP_HEIGHT 20
@@ -41,21 +48,37 @@ void initializePlayers(){
     }
 }
 
-void createPlayer(int clientSocket, char* name) {
+int findPlayerIndex(int clientSocket) { 
+    // ritorna l'indice del player cosrrispondente alla socket, -1 se non esiste
     int i = 0;
-    while (i < sizeof(players) && players[i].clientSocket != -1) {
+    while (i < sizeof(players) && players[i].clientSocket != clientSocket) {
         i++;
     }
 
-    if(i < sizeof(players)) {
-        players[i].clientSocket = clientSocket;
-        players[i].name = name;
-        players[i].posX = 45;
-        players[i].posY = 10;
-        players[i].points = 0;
-    }
+    if (i < sizeof(players))
+        return i;
+    
+    return -1;
+}
 
-    map[players[i].posY][players[i].posX] = 2;
+void createPlayer(int clientSocket, char* name) {
+    if(findPlayerIndex(clientSocket) == -1) {
+
+        int i = 0;
+        while (i < sizeof(players) && players[i].name != "") {
+            i++;
+        }
+
+        if (i < sizeof(players)) {
+            players[i].clientSocket = clientSocket;
+            players[i].name = name;
+            players[i].posX = 45;
+            players[i].posY = 10;
+            players[i].points = 0;
+
+            map[players[i].posY][players[i].posX] = 2; // fare in modo che player diversi inizino da posizioni diverse
+        }
+    }
 }
 
 void getMapDimension(int clientSocket)
@@ -89,28 +112,75 @@ void getMapMatrix(int clientSocket)
 }
 
 void moveLeft(int clientSocket) {
-    int i = 0;
-    while (i < sizeof(players) && players[i].clientSocket != clientSocket) {
-        i++;
-    }
+    int i = findPlayerIndex(clientSocket);
 
-    if(i < sizeof(players)) {
+    if(i != -1) {
 
         int x = players[i].posX - 1;
         int y = players[i].posY;
 
-        if (x >= 0 && map[y][x] != 1) {
+        if (x >= 0 && map[y][x] != WALL_ITEM) {
             // inserire quì il controllo per i punti
 
-            map[y][x] = 2;
-            map[y][x + 1] = 0;
+            map[y][x] = PLAYER_ITEM;
+            map[y][x + 1] = EMPTY_ITEM;
             players[i].posX -= 1;
         }
     }
 }
 
-void moveRight(int distance, int clientSocket) {
-    printf("Eseguo movimento a destra di: %d\n", distance);
+void moveRight(int clientSocket) {
+    int i = findPlayerIndex(clientSocket);
+
+    if(i != -1) {
+
+        int x = players[i].posX + 1;
+        int y = players[i].posY;
+
+        if (x <= MAP_WIDTH && map[y][x] != WALL_ITEM) {
+            // inserire quì il controllo per i punti
+
+            map[y][x] = PLAYER_ITEM;
+            map[y][x - 1] = EMPTY_ITEM;
+            players[i].posX += 1;
+        }
+    }
+}
+
+void moveUp(int clientSocket) {
+    int i = findPlayerIndex(clientSocket);
+
+    if(i != -1) {
+
+        int x = players[i].posX;
+        int y = players[i].posY - 1;
+
+        if (y >= 0 && map[y][x] != WALL_ITEM) {
+            // inserire quì il controllo per i punti
+
+            map[y][x] = PLAYER_ITEM;
+            map[y + 1][x] = EMPTY_ITEM;
+            players[i].posY -= 1;
+        }
+    }
+}
+
+void moveDown(int clientSocket) {
+    int i = findPlayerIndex(clientSocket);
+
+    if(i != -1) {
+
+        int x = players[i].posX;
+        int y = players[i].posY + 1;
+
+        if (y <= MAP_HEIGHT && map[y][x] != WALL_ITEM) {
+            // inserire quì il controllo per i punti
+
+            map[y][x] = PLAYER_ITEM;
+            map[y - 1][x] = EMPTY_ITEM;
+            players[i].posY += 1;
+        }
+    }
 }
 
 void divide_input(const char* input, char* command, char arguments[][MAX_ARG_LEN], int* arg_count) {
@@ -169,7 +239,15 @@ void parse_command(const char* input, int clientSocket) {
     }
     else if (strcmp(command, "moveright") == 0) {
         int distance = atoi(arguments[0]);
-        moveRight(distance, clientSocket);
+        moveRight(clientSocket);
+    }
+    else if (strcmp(command, "moveup") == 0) {
+        int distance = atoi(arguments[0]);
+        moveUp(clientSocket);
+    }
+    else if (strcmp(command, "movedown") == 0) {
+        int distance = atoi(arguments[0]);
+        moveDown(clientSocket);
     }
     else if (strcmp(command, "getmapdimension") == 0) {
         getMapDimension(clientSocket);
