@@ -356,7 +356,7 @@ void acceptloop(int serverSocket) {
 
     while (1)
     {
-        int fruits[] = { 3, 5, 7 };
+        int fruits[] = { APPLE_ITEM, BANANA_ITEM, GRAPE_ITEM };
 
         srand(time(NULL));
 
