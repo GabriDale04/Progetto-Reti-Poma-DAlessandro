@@ -111,6 +111,43 @@ void getMapMatrix(int clientSocket)
         error("ERROR writing on socket");      
 }
 
+void eatFruit(int playerIndex, int x, int y) {
+    int item = map[y][x];
+    
+    if(item == APPLE_ITEM){
+        map[y][x] = EMPTY_ITEM;
+        map[y][x + 1] = EMPTY_ITEM;
+        players[playerIndex].points += 1;
+
+    } else if (item == APPLE_ITEM + 1){
+        map[y][x] = EMPTY_ITEM;
+        map[y][x - 1] = EMPTY_ITEM;
+        players[playerIndex].points += 1;
+
+    } else if (item == BANANA_ITEM){
+        map[y][x] = EMPTY_ITEM;
+        map[y][x + 1] = EMPTY_ITEM;
+        players[playerIndex].points += 2;
+
+    } else if (item == BANANA_ITEM + 1){
+        map[y][x] = EMPTY_ITEM;
+        map[y][x - 1] = EMPTY_ITEM;
+        players[playerIndex].points += 2;
+
+    }  else if (item == GRAPE_ITEM){
+        map[y][x] = EMPTY_ITEM;
+        map[y][x + 1] = EMPTY_ITEM;
+        players[playerIndex].points += 3;
+
+    } else if (item == GRAPE_ITEM + 1){
+        map[y][x] = EMPTY_ITEM;
+        map[y][x - 1] = EMPTY_ITEM;
+        players[playerIndex].points += 3;
+    }
+
+    //printf("Score: %d\n", players[playerIndex].points);  
+}
+
 void moveLeft(int clientSocket) {
     int i = findPlayerIndex(clientSocket);
 
@@ -120,7 +157,7 @@ void moveLeft(int clientSocket) {
         int y = players[i].posY;
 
         if (x >= 0 && map[y][x] != WALL_ITEM) {
-            // inserire quì il controllo per i punti
+            eatFruit(i, x, y);
 
             map[y][x] = PLAYER_ITEM;
             map[y][x + 1] = EMPTY_ITEM;
@@ -138,7 +175,7 @@ void moveRight(int clientSocket) {
         int y = players[i].posY;
 
         if (x <= MAP_WIDTH && map[y][x] != WALL_ITEM) {
-            // inserire quì il controllo per i punti
+            eatFruit(i, x, y);
 
             map[y][x] = PLAYER_ITEM;
             map[y][x - 1] = EMPTY_ITEM;
@@ -156,7 +193,7 @@ void moveUp(int clientSocket) {
         int y = players[i].posY - 1;
 
         if (y >= 0 && map[y][x] != WALL_ITEM) {
-            // inserire quì il controllo per i punti
+            eatFruit(i, x, y);
 
             map[y][x] = PLAYER_ITEM;
             map[y + 1][x] = EMPTY_ITEM;
@@ -174,7 +211,7 @@ void moveDown(int clientSocket) {
         int y = players[i].posY + 1;
 
         if (y <= MAP_HEIGHT && map[y][x] != WALL_ITEM) {
-            // inserire quì il controllo per i punti
+            eatFruit(i, x, y);
 
             map[y][x] = PLAYER_ITEM;
             map[y - 1][x] = EMPTY_ITEM;
@@ -333,7 +370,7 @@ void acceptloop(int serverSocket) {
             {
                 int fruit = rand() % 3;
                 map[y][x] = fruits[fruit];
-                map[y][x + 1] = fruits[fruit + 1];
+                map[y][x + 1] = fruits[fruit] + 1;
             }
         }
 

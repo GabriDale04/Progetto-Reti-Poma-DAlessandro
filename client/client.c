@@ -116,7 +116,7 @@ void printMap()
             int item = map[r * map_width + c];
 
             printItem(item);
-
+            
             if (item == APPLE_ITEM || item == BANANA_ITEM || item == GRAPE_ITEM)
                 c++;
         }
