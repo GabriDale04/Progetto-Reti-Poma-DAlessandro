@@ -140,6 +140,16 @@ void getMapDimension(int clientSocket)
         error("ERROR writing on socket");
 }
 
+void createMap()
+{
+    for (int r = 0; r < MAP_HEIGHT; r++)
+        for (int c = 0; c < MAP_WIDTH; c++)
+            if (r == 0 || r == MAP_HEIGHT - 1 || c == 0 || c == MAP_WIDTH - 1)
+                map[r][c] = 1;
+            else
+                map[r][c] = 0;
+}
+
 void getMapMatrix(int clientSocket)
 {
     int map_array[MAP_WIDTH * MAP_HEIGHT];
@@ -290,7 +300,6 @@ void moveDown(int clientSocket)
 
 void divide_input(const char *input, char *command, char arguments[][MAX_ARG_LEN], int *arg_count)
 {
-
     // Trova la prima virgola e la separa dagli argomenti
     const char *separator_pos = strchr(input, ',');
     if (separator_pos == NULL)
@@ -397,7 +406,7 @@ void *playerThread(void *socket)
         {
             char *m = "startgame";
             int len = sizeof(m);
-            
+
             result = write(clientSocket, m, len);
             if (result < 0)
             {
@@ -455,7 +464,6 @@ void mainLoop(int serverSocket)
             }
             else
             {
-                // pthread_create(&clientThread, NULL, &playerThread, &clientSocket);
                 int *newSocket = malloc(sizeof(int));
                 *newSocket = clientSocket;
                 pthread_create(&clientThread, NULL, &playerThread, newSocket);
@@ -490,16 +498,6 @@ void mainLoop(int serverSocket)
             sleep(10);
         }
     }
-}
-
-void createMap()
-{
-    for (int r = 0; r < MAP_HEIGHT; r++)
-        for (int c = 0; c < MAP_WIDTH; c++)
-            if (r == 0 || r == MAP_HEIGHT - 1 || c == 0 || c == MAP_WIDTH - 1)
-                map[r][c] = 1;
-            else
-                map[r][c] = 0;
 }
 
 int main(int argc, char *argv[])
