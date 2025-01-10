@@ -88,6 +88,23 @@ void getMapMatrix(int clientSocket)
         error("ERROR writing on socket");      
 }
 
+void getPoints(int clientSocket)
+{
+    int points = 0;
+
+    for (int i = 0; i < MAX_PLAYERS_COUNT; i++)
+        if (players[i].clientSocket == clientSocket)
+        {
+            points = players[i].points;
+            break;
+        }
+    
+    int result = write(clientSocket, &points, sizeof(int));
+
+    if (result < 0)
+        error("ERROR writing on socket");
+}
+
 void moveLeft(int clientSocket) {
     int i = 0;
     while (i < sizeof(players) && players[i].clientSocket != clientSocket) {
@@ -176,6 +193,9 @@ void parse_command(const char* input, int clientSocket) {
     }
     else if (strcmp(command, "getmapmatrix") == 0) {
         getMapMatrix(clientSocket);
+    }
+    else if (strcmp(command, "getpoints") == 0) {
+        getPoints(clientSocket);
     }
     else {
         printf("Invalid command: %s\n", command);

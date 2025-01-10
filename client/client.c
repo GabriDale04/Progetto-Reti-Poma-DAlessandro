@@ -107,8 +107,6 @@ void printItem(int item)
 
 void printMap()
 {
-    setCursorPosition(0, 0);
-
     for (int r = 0; r < map_height; r++)
     {
         for (int c = 0; c < map_width; c++)
@@ -137,11 +135,13 @@ void getMapDimension()
         error("ERROR reading from socket");
         free(dimension);
     }
+    else
+    {
+        map_width = dimension[0];
+        map_height = dimension[1];
 
-    map_width = dimension[0];
-    map_height = dimension[1];
-
-    free(dimension);
+        free(dimension);
+    }
 }
 
 void getMapMatrix()
@@ -151,7 +151,34 @@ void getMapMatrix()
     map = (int*)malloc(map_width * map_height * sizeof(int));
     int result = read(client_socket, map, map_width * map_height * sizeof(int));
 
-    printMap();
+    if (result < 0)
+    {
+        error("ERROR reading from socket");
+        free(map);
+    }
+    else
+    {
+        printMap();
+        free(map);
+    }
+}
+
+void getPoints()
+{
+    sendCommand("getpoints");
+
+    int points = 0;
+    int result = read(client_socket, &points, sizeof(int));
+
+    if (result < 0)
+    {
+        error("ERROR reading from socket");
+    }
+    else
+    {
+        setCursorPosition(0, 0);
+        printf("Punti: %d\n", points);
+    }
 }
 
 void mainloop()
@@ -165,6 +192,7 @@ void mainloop()
     {   
         pthread_mutex_lock(&lock);
 
+        getPoints();
         getMapMatrix();
 
         pthread_mutex_unlock(&lock);
