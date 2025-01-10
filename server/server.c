@@ -7,6 +7,13 @@
 #include <netinet/in.h>
 #include <pthread.h>
 
+#define EMPTY_ITEM 0
+#define WALL_ITEM 1
+#define PLAYER_ITEM 2
+#define APPLE_ITEM 3
+#define BANANA_ITEM 5
+#define GRAPE_ITEM 7
+
 #define MAX_PLAYERS_COUNT 4
 #define MAP_WIDTH 70
 #define MAP_HEIGHT 20
@@ -41,21 +48,37 @@ void initializePlayers(){
     }
 }
 
-void createPlayer(int clientSocket, char* name) {
+int findPlayerIndex(int clientSocket) { 
+    // ritorna l'indice del player cosrrispondente alla socket, -1 se non esiste
     int i = 0;
-    while (i < sizeof(players) && players[i].clientSocket != -1) {
+    while (i < sizeof(players) && players[i].clientSocket != clientSocket) {
         i++;
     }
 
-    if(i < sizeof(players)) {
-        players[i].clientSocket = clientSocket;
-        players[i].name = name;
-        players[i].posX = 45;
-        players[i].posY = 10;
-        players[i].points = 0;
-    }
+    if (i < sizeof(players))
+        return i;
+    
+    return -1;
+}
 
-    map[players[i].posY][players[i].posX] = 2;
+void createPlayer(int clientSocket, char* name) {
+    if(findPlayerIndex(clientSocket) == -1) {
+
+        int i = 0;
+        while (i < sizeof(players) && players[i].name != "") {
+            i++;
+        }
+
+        if (i < sizeof(players)) {
+            players[i].clientSocket = clientSocket;
+            players[i].name = name;
+            players[i].posX = 45;
+            players[i].posY = 10;
+            players[i].points = 0;
+
+            map[players[i].posY][players[i].posX] = 2; // fare in modo che player diversi inizino da posizioni diverse
+        }
+    }
 }
 
 void getMapDimension(int clientSocket)
@@ -88,46 +111,113 @@ void getMapMatrix(int clientSocket)
         error("ERROR writing on socket");      
 }
 
-void getPoints(int clientSocket)
-{
-    int points = 0;
-
-    for (int i = 0; i < MAX_PLAYERS_COUNT; i++)
-        if (players[i].clientSocket == clientSocket)
-        {
-            points = players[i].points;
-            break;
-        }
+void eatFruit(int playerIndex, int x, int y) {
+    int item = map[y][x];
     
-    int result = write(clientSocket, &points, sizeof(int));
+    if(item == APPLE_ITEM){
+        map[y][x] = EMPTY_ITEM;
+        map[y][x + 1] = EMPTY_ITEM;
+        players[playerIndex].points += 1;
 
-    if (result < 0)
-        error("ERROR writing on socket");
+    } else if (item == APPLE_ITEM + 1){
+        map[y][x] = EMPTY_ITEM;
+        map[y][x - 1] = EMPTY_ITEM;
+        players[playerIndex].points += 1;
+
+    } else if (item == BANANA_ITEM){
+        map[y][x] = EMPTY_ITEM;
+        map[y][x + 1] = EMPTY_ITEM;
+        players[playerIndex].points += 2;
+
+    } else if (item == BANANA_ITEM + 1){
+        map[y][x] = EMPTY_ITEM;
+        map[y][x - 1] = EMPTY_ITEM;
+        players[playerIndex].points += 2;
+
+    }  else if (item == GRAPE_ITEM){
+        map[y][x] = EMPTY_ITEM;
+        map[y][x + 1] = EMPTY_ITEM;
+        players[playerIndex].points += 3;
+
+    } else if (item == GRAPE_ITEM + 1){
+        map[y][x] = EMPTY_ITEM;
+        map[y][x - 1] = EMPTY_ITEM;
+        players[playerIndex].points += 3;
+    }
+
+    //printf("Score: %d\n", players[playerIndex].points);  
 }
 
 void moveLeft(int clientSocket) {
-    int i = 0;
-    while (i < sizeof(players) && players[i].clientSocket != clientSocket) {
-        i++;
-    }
+    int i = findPlayerIndex(clientSocket);
 
-    if(i < sizeof(players)) {
+    if(i != -1) {
 
         int x = players[i].posX - 1;
         int y = players[i].posY;
 
-        if (x >= 0 && map[y][x] != 1) {
-            // inserire quì il controllo per i punti
+        if (x >= 0 && map[y][x] != WALL_ITEM) {
+            eatFruit(i, x, y);
 
-            map[y][x] = 2;
-            map[y][x + 1] = 0;
+            map[y][x] = PLAYER_ITEM;
+            map[y][x + 1] = EMPTY_ITEM;
             players[i].posX -= 1;
         }
     }
 }
 
-void moveRight(int distance, int clientSocket) {
-    printf("Eseguo movimento a destra di: %d\n", distance);
+void moveRight(int clientSocket) {
+    int i = findPlayerIndex(clientSocket);
+
+    if(i != -1) {
+
+        int x = players[i].posX + 1;
+        int y = players[i].posY;
+
+        if (x <= MAP_WIDTH && map[y][x] != WALL_ITEM) {
+            eatFruit(i, x, y);
+
+            map[y][x] = PLAYER_ITEM;
+            map[y][x - 1] = EMPTY_ITEM;
+            players[i].posX += 1;
+        }
+    }
+}
+
+void moveUp(int clientSocket) {
+    int i = findPlayerIndex(clientSocket);
+
+    if(i != -1) {
+
+        int x = players[i].posX;
+        int y = players[i].posY - 1;
+
+        if (y >= 0 && map[y][x] != WALL_ITEM) {
+            eatFruit(i, x, y);
+
+            map[y][x] = PLAYER_ITEM;
+            map[y + 1][x] = EMPTY_ITEM;
+            players[i].posY -= 1;
+        }
+    }
+}
+
+void moveDown(int clientSocket) {
+    int i = findPlayerIndex(clientSocket);
+
+    if(i != -1) {
+
+        int x = players[i].posX;
+        int y = players[i].posY + 1;
+
+        if (y <= MAP_HEIGHT && map[y][x] != WALL_ITEM) {
+            eatFruit(i, x, y);
+
+            map[y][x] = PLAYER_ITEM;
+            map[y - 1][x] = EMPTY_ITEM;
+            players[i].posY += 1;
+        }
+    }
 }
 
 void divide_input(const char* input, char* command, char arguments[][MAX_ARG_LEN], int* arg_count) {
@@ -186,7 +276,15 @@ void parse_command(const char* input, int clientSocket) {
     }
     else if (strcmp(command, "moveright") == 0) {
         int distance = atoi(arguments[0]);
-        moveRight(distance, clientSocket);
+        moveRight(clientSocket);
+    }
+    else if (strcmp(command, "moveup") == 0) {
+        int distance = atoi(arguments[0]);
+        moveUp(clientSocket);
+    }
+    else if (strcmp(command, "movedown") == 0) {
+        int distance = atoi(arguments[0]);
+        moveDown(clientSocket);
     }
     else if (strcmp(command, "getmapdimension") == 0) {
         getMapDimension(clientSocket);
@@ -261,7 +359,7 @@ void acceptloop(int serverSocket) {
 
     while (1)
     {
-        int fruits[] = { 3, 5, 7 };
+        int fruits[] = { APPLE_ITEM, BANANA_ITEM, GRAPE_ITEM };
 
         srand(time(NULL));
 
@@ -275,7 +373,7 @@ void acceptloop(int serverSocket) {
             {
                 int fruit = rand() % 3;
                 map[y][x] = fruits[fruit];
-                map[y][x + 1] = fruits[fruit + 1];
+                map[y][x + 1] = fruits[fruit] + 1;
             }
         }
 
