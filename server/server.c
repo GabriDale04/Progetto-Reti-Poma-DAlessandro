@@ -25,6 +25,10 @@
 #define MAX_ARG_LEN 100
 #define MAX_ARG_COUNT 10
 
+pthread_mutex_t mapMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t playersMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t gameStateMutex = PTHREAD_MUTEX_INITIALIZER;
+
 bool inGame = false;
 int playersCount;
 
@@ -49,6 +53,7 @@ void error(const char *msg)
 
 void initializePlayers()
 {
+    pthread_mutex_lock(&playersMutex);
     for (int i = 0; i < MAX_PLAYERS_COUNT; i++)
     {
         players[i].clientSocket = -1;
@@ -57,11 +62,13 @@ void initializePlayers()
         players[i].posY = 0;
         players[i].points = 0;
     }
+    pthread_mutex_unlock(&playersMutex);
 }
 
 int findPlayerIndex(int clientSocket)
 {
     // ritorna l'indice del player cosrrispondente alla socket, -1 se non esiste
+    pthread_mutex_lock(&playersMutex);
     int i = 0;
     while (i < sizeof(players) && players[i].clientSocket != clientSocket)
     {
@@ -69,8 +76,12 @@ int findPlayerIndex(int clientSocket)
     }
 
     if (i < sizeof(players))
+    {
+        pthread_mutex_unlock(&playersMutex);
         return i;
+    }
 
+    pthread_mutex_unlock(&playersMutex);
     return -1;
 }
 
@@ -78,13 +89,14 @@ void createPlayer(int clientSocket, char *name)
 {
     int initialPos[MAX_PLAYERS_COUNT][2] = {
         {2, 2},                         // top left
-        {MAP_WIDTH - 2, 2},             // top right
+        {MAP_WIDTH - 3, 2},             // top right
         {2, MAP_HEIGHT - 2},            // bottom left
-        {MAP_WIDTH - 2, MAP_HEIGHT - 2} // bottom right
+        {MAP_WIDTH - 3, MAP_HEIGHT - 3} // bottom right
     };
 
     if (findPlayerIndex(clientSocket) == -1)
     {
+        pthread_mutex_lock(&playersMutex);
         int i = 0;
         while (i < sizeof(players) && players[i].name != "")
         {
@@ -101,24 +113,30 @@ void createPlayer(int clientSocket, char *name)
 
             map[players[i].posY][players[i].posX] = 2; // fare in modo che player diversi inizino da posizioni diverse
         }
+        pthread_mutex_unlock(&playersMutex);
     }
 }
 
 void removePlayer(int playerIndex)
 {
+    pthread_mutex_lock(&mapMutex);
     map[players[playerIndex].posY][players[playerIndex].posX] = EMPTY_ITEM;
+    pthread_mutex_unlock(&mapMutex);
 
+    pthread_mutex_lock(&playersMutex);
     players[playerIndex].clientSocket = -1;
     players[playerIndex].name = "";
     players[playerIndex].posX = 0;
     players[playerIndex].posY = 0;
     players[playerIndex].points = 0;
+    pthread_mutex_unlock(&playersMutex);
 }
 
 int connectedPlayers()
 {
     int count = 0;
 
+    pthread_mutex_lock(&playersMutex);
     for (int i = 0; i < MAX_PLAYERS_COUNT; i++)
     {
         if (players[i].clientSocket != -1)
@@ -126,6 +144,7 @@ int connectedPlayers()
             count++;
         }
     }
+    pthread_mutex_unlock(&playersMutex);
 
     return count;
 }
@@ -142,12 +161,14 @@ void getMapDimension(int clientSocket)
 
 void createMap()
 {
+    pthread_mutex_lock(&mapMutex);
     for (int r = 0; r < MAP_HEIGHT; r++)
         for (int c = 0; c < MAP_WIDTH; c++)
             if (r == 0 || r == MAP_HEIGHT - 1 || c == 0 || c == MAP_WIDTH - 1)
                 map[r][c] = 1;
             else
                 map[r][c] = 0;
+    pthread_mutex_unlock(&mapMutex);
 }
 
 void getMapMatrix(int clientSocket)
@@ -155,6 +176,7 @@ void getMapMatrix(int clientSocket)
     int map_array[MAP_WIDTH * MAP_HEIGHT];
     int k = 0;
 
+    pthread_mutex_lock(&mapMutex);
     for (int i = 0; i < MAP_HEIGHT; i++)
     {
         for (int j = 0; j < MAP_WIDTH; j++)
@@ -163,6 +185,7 @@ void getMapMatrix(int clientSocket)
             k++;
         }
     }
+    pthread_mutex_unlock(&mapMutex);
 
     int result = write(clientSocket, &map, MAP_WIDTH * MAP_HEIGHT * sizeof(int));
 
@@ -172,46 +195,69 @@ void getMapMatrix(int clientSocket)
 
 void eatFruit(int playerIndex, int x, int y)
 {
+    // pthread_mutex_lock(&mapMutex);
     int item = map[y][x];
 
     if (item == APPLE_ITEM)
     {
         map[y][x] = EMPTY_ITEM;
         map[y][x + 1] = EMPTY_ITEM;
+        // pthread_mutex_unlock(&mapMutex);
+
+        // pthread_mutex_lock(&playersMutex);
         players[playerIndex].points += 1;
+        // pthread_mutex_unlock(&playersMutex);
     }
     else if (item == APPLE_ITEM + 1)
     {
         map[y][x] = EMPTY_ITEM;
         map[y][x - 1] = EMPTY_ITEM;
+        // pthread_mutex_unlock(&mapMutex);
+
+        // pthread_mutex_lock(&playersMutex);
         players[playerIndex].points += 1;
+        // pthread_mutex_unlock(&playersMutex);
     }
     else if (item == BANANA_ITEM)
     {
         map[y][x] = EMPTY_ITEM;
         map[y][x + 1] = EMPTY_ITEM;
+        // pthread_mutex_unlock(&mapMutex);
+
+        // pthread_mutex_lock(&playersMutex);
         players[playerIndex].points += 2;
+        // pthread_mutex_unlock(&playersMutex);
     }
     else if (item == BANANA_ITEM + 1)
     {
         map[y][x] = EMPTY_ITEM;
         map[y][x - 1] = EMPTY_ITEM;
+        // pthread_mutex_unlock(&mapMutex);
+
+        // pthread_mutex_lock(&playersMutex);
         players[playerIndex].points += 2;
+        // pthread_mutex_unlock(&playersMutex);
     }
     else if (item == GRAPE_ITEM)
     {
         map[y][x] = EMPTY_ITEM;
         map[y][x + 1] = EMPTY_ITEM;
+        // pthread_mutex_unlock(&mapMutex);
+
+        // pthread_mutex_lock(&playersMutex);
         players[playerIndex].points += 3;
+        // pthread_mutex_unlock(&playersMutex);
     }
     else if (item == GRAPE_ITEM + 1)
     {
         map[y][x] = EMPTY_ITEM;
         map[y][x - 1] = EMPTY_ITEM;
-        players[playerIndex].points += 3;
-    }
+        // pthread_mutex_unlock(&mapMutex);
 
-    // printf("Score: %d\n", players[playerIndex].points);
+        // pthread_mutex_lock(&playersMutex);
+        players[playerIndex].points += 3;
+        // pthread_mutex_unlock(&playersMutex);
+    }
 }
 
 void moveLeft(int clientSocket)
@@ -220,7 +266,8 @@ void moveLeft(int clientSocket)
 
     if (i != -1)
     {
-
+        pthread_mutex_lock(&playersMutex);
+        pthread_mutex_lock(&mapMutex);
         int x = players[i].posX - 1;
         int y = players[i].posY;
 
@@ -230,8 +277,12 @@ void moveLeft(int clientSocket)
 
             map[y][x] = PLAYER_ITEM;
             map[y][x + 1] = EMPTY_ITEM;
+
             players[i].posX -= 1;
         }
+
+        pthread_mutex_unlock(&mapMutex);
+        pthread_mutex_unlock(&playersMutex);
     }
 }
 
@@ -241,7 +292,8 @@ void moveRight(int clientSocket)
 
     if (i != -1)
     {
-
+        pthread_mutex_lock(&playersMutex);
+        pthread_mutex_lock(&mapMutex);
         int x = players[i].posX + 1;
         int y = players[i].posY;
 
@@ -251,8 +303,12 @@ void moveRight(int clientSocket)
 
             map[y][x] = PLAYER_ITEM;
             map[y][x - 1] = EMPTY_ITEM;
+
             players[i].posX += 1;
         }
+
+        pthread_mutex_unlock(&mapMutex);
+        pthread_mutex_unlock(&playersMutex);
     }
 }
 
@@ -262,7 +318,8 @@ void moveUp(int clientSocket)
 
     if (i != -1)
     {
-
+        pthread_mutex_lock(&playersMutex);
+        pthread_mutex_lock(&mapMutex);
         int x = players[i].posX;
         int y = players[i].posY - 1;
 
@@ -272,8 +329,12 @@ void moveUp(int clientSocket)
 
             map[y][x] = PLAYER_ITEM;
             map[y + 1][x] = EMPTY_ITEM;
+
             players[i].posY -= 1;
         }
+
+        pthread_mutex_unlock(&mapMutex);
+        pthread_mutex_unlock(&playersMutex);
     }
 }
 
@@ -283,7 +344,8 @@ void moveDown(int clientSocket)
 
     if (i != -1)
     {
-
+        pthread_mutex_lock(&playersMutex);
+        pthread_mutex_lock(&mapMutex);
         int x = players[i].posX;
         int y = players[i].posY + 1;
 
@@ -293,8 +355,12 @@ void moveDown(int clientSocket)
 
             map[y][x] = PLAYER_ITEM;
             map[y - 1][x] = EMPTY_ITEM;
+
             players[i].posY += 1;
         }
+
+        pthread_mutex_unlock(&mapMutex);
+        pthread_mutex_unlock(&playersMutex);
     }
 }
 
@@ -472,7 +538,9 @@ void mainLoop(int serverSocket)
 
             if (connectedPlayers() == playersCount)
             {
+                pthread_mutex_lock(&gameStateMutex);
                 inGame = true;
+                pthread_mutex_unlock(&gameStateMutex);
             }
         }
 
