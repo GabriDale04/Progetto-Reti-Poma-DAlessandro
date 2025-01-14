@@ -195,68 +195,49 @@ void getMapMatrix(int clientSocket)
 
 void eatFruit(int playerIndex, int x, int y)
 {
-    // pthread_mutex_lock(&mapMutex);
     int item = map[y][x];
 
     if (item == APPLE_ITEM)
     {
         map[y][x] = EMPTY_ITEM;
         map[y][x + 1] = EMPTY_ITEM;
-        // pthread_mutex_unlock(&mapMutex);
 
-        // pthread_mutex_lock(&playersMutex);
         players[playerIndex].points += 1;
-        // pthread_mutex_unlock(&playersMutex);
     }
     else if (item == APPLE_ITEM + 1)
     {
         map[y][x] = EMPTY_ITEM;
         map[y][x - 1] = EMPTY_ITEM;
-        // pthread_mutex_unlock(&mapMutex);
 
-        // pthread_mutex_lock(&playersMutex);
         players[playerIndex].points += 1;
-        // pthread_mutex_unlock(&playersMutex);
     }
     else if (item == BANANA_ITEM)
     {
         map[y][x] = EMPTY_ITEM;
         map[y][x + 1] = EMPTY_ITEM;
-        // pthread_mutex_unlock(&mapMutex);
 
-        // pthread_mutex_lock(&playersMutex);
         players[playerIndex].points += 2;
-        // pthread_mutex_unlock(&playersMutex);
     }
     else if (item == BANANA_ITEM + 1)
     {
         map[y][x] = EMPTY_ITEM;
         map[y][x - 1] = EMPTY_ITEM;
-        // pthread_mutex_unlock(&mapMutex);
 
-        // pthread_mutex_lock(&playersMutex);
         players[playerIndex].points += 2;
-        // pthread_mutex_unlock(&playersMutex);
     }
     else if (item == GRAPE_ITEM)
     {
         map[y][x] = EMPTY_ITEM;
         map[y][x + 1] = EMPTY_ITEM;
-        // pthread_mutex_unlock(&mapMutex);
 
-        // pthread_mutex_lock(&playersMutex);
         players[playerIndex].points += 3;
-        // pthread_mutex_unlock(&playersMutex);
     }
     else if (item == GRAPE_ITEM + 1)
     {
         map[y][x] = EMPTY_ITEM;
         map[y][x - 1] = EMPTY_ITEM;
-        // pthread_mutex_unlock(&mapMutex);
 
-        // pthread_mutex_lock(&playersMutex);
         players[playerIndex].points += 3;
-        // pthread_mutex_unlock(&playersMutex);
     }
 }
 
