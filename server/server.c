@@ -210,23 +210,6 @@ void getPoints(int clientSocket)
         error("ERROR writing on socket");
 }
 
-void getPoints(int clientSocket)
-{
-    int points = 0;
-
-    for (int i = 0; i < MAX_PLAYERS_COUNT; i++)
-        if (players[i].clientSocket == clientSocket)
-        {
-            points = players[i].points;
-            break;
-        }
-    
-    int result = write(clientSocket, &points, sizeof(int));
-
-    if (result < 0)
-        error("ERROR writing on socket");
-}
-
 void eatFruit(int playerIndex, int x, int y)
 {
     int item = map[y][x];
