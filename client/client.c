@@ -213,7 +213,7 @@ void mainloop(int clientSocket) {
 
 int main(int argc, char* argv[]) {
     pthread_mutex_init(&lock, NULL);
-    //clearScreen();
+    clearScreen();
 
     struct sockaddr_in serv_addr;
     struct hostent* server;
