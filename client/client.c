@@ -157,7 +157,7 @@ void getPoints()
     sendCommand("getpoints");
 
     int points = 0;
-    int result = read(client_socket, &points, sizeof(int));
+    int result = read(clientSocket, &points, sizeof(int));
 
     if (result < 0)
     {
@@ -213,7 +213,7 @@ void mainloop(int clientSocket) {
 
 int main(int argc, char* argv[]) {
     pthread_mutex_init(&lock, NULL);
-    clearScreen();
+    //clearScreen();
 
     struct sockaddr_in serv_addr;
     struct hostent* server;
