@@ -111,7 +111,10 @@ void createPlayer(int clientSocket, char *name)
             players[i].posY = initialPos[i][1];
             players[i].points = 0;
 
-            map[players[i].posY][players[i].posX] = 2; // fare in modo che player diversi inizino da posizioni diverse
+            pthread_mutex_lock(&mapMutex);
+            map[players[i].posY][players[i].posX] = 2;
+            pthread_mutex_unlock(&mapMutex);
+
         }
         pthread_mutex_unlock(&playersMutex);
     }
