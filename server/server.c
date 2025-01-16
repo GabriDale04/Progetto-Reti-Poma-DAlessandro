@@ -114,7 +114,6 @@ void createPlayer(int clientSocket, char *name)
             pthread_mutex_lock(&mapMutex);
             map[players[i].posY][players[i].posX] = 2;
             pthread_mutex_unlock(&mapMutex);
-
         }
         pthread_mutex_unlock(&playersMutex);
     }
@@ -206,7 +205,7 @@ void getPoints(int clientSocket)
             points = players[i].points;
             break;
         }
-    
+
     int result = write(clientSocket, &points, sizeof(int));
 
     if (result < 0)
@@ -449,10 +448,12 @@ void parse_command(const char *input, int clientSocket)
     {
         getMapMatrix(clientSocket);
     }
-    else if (strcmp(command, "getpoints") == 0) {
+    else if (strcmp(command, "getpoints") == 0)
+    {
         getPoints(clientSocket);
     }
-    else {
+    else
+    {
         printf("Invalid command: %s\n", command);
     }
 }
@@ -585,7 +586,13 @@ int main(int argc, char *argv[])
     initializePlayers();
     createMap();
 
-    int arg2 = atoi(argv[2]);
+
+    int arg2 = 0;
+
+    if (argc >= 3)
+    {
+         arg2 = atoi(argv[2]);
+    }
 
     if (arg2 >= MIN_PLAYERS_COUNT && arg2 <= MAX_PLAYERS_COUNT)
     {
