@@ -463,8 +463,6 @@ void *playerThread(void *socket)
     int *socketPtr = (unsigned int *)socket;
     int clientSocket = *socketPtr;
 
-    createPlayer(clientSocket, "nome");
-
     printf("Accepted new client\n");
 
     char buffer[256];
@@ -536,6 +534,9 @@ void mainLoop(int serverSocket)
             {
                 int *newSocket = malloc(sizeof(int));
                 *newSocket = clientSocket;
+
+                createPlayer(clientSocket, "nome"); // capire se salvare il nome del giocatore sul server o no
+
                 pthread_create(&clientThread, NULL, &playerThread, newSocket);
                 pthread_detach(clientThread);
             }
@@ -586,12 +587,11 @@ int main(int argc, char *argv[])
     initializePlayers();
     createMap();
 
-
     int arg2 = 0;
 
     if (argc >= 3)
     {
-         arg2 = atoi(argv[2]);
+        arg2 = atoi(argv[2]);
     }
 
     if (arg2 >= MIN_PLAYERS_COUNT && arg2 <= MAX_PLAYERS_COUNT)
