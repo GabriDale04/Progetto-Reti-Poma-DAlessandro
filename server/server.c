@@ -21,7 +21,7 @@
 #define MAP_WIDTH 70
 #define MAP_HEIGHT 20
 
-#define TIME 15
+#define TIME 30
 
 #define MAX_COMMAND_LEN 100
 #define MAX_ARG_LEN 100
@@ -36,16 +36,16 @@ int playersCount;
 
 int time_remaining;
 
-struct Player
+typedef struct Player
 {
     int clientSocket;
     char *name;
     int posX;
     int posY;
     int points;
-};
+} Player;
 
-struct Player players[MAX_PLAYERS_COUNT];
+Player players[MAX_PLAYERS_COUNT];
 
 int map[MAP_HEIGHT][MAP_WIDTH];
 
@@ -219,6 +219,53 @@ void getPoints(int clientSocket)
 void getTime(int clientSocket)
 {
     int result = write(clientSocket, &time_remaining, sizeof(int));
+
+    if (result < 0)
+        error("ERROR writing on socket");
+}
+
+int comparePlayerByPoints(const void* a, const void* b)
+{
+    Player* playerA = (Player*)a;
+    Player* playerB = (Player*)b;
+
+    return playerB->points - playerA->points;
+}
+
+void getStandings(int clientSocket)
+{
+    char buffer[1024];
+    
+    pthread_mutex_lock(&playersMutex);
+
+    // Ordina i giocatori per punti utilizzando la funzione di comparison
+    qsort(players, MAX_PLAYERS_COUNT, sizeof(Player), comparePlayerByPoints);
+
+    int standingsPos = 1;
+
+    char gold[] = "\033[38;5;220m";
+    char silver[] = "\033[38;5;8m";
+    char bronze[] = "\033[38;5;88m";
+    char neutral[] = "\033[97m";
+
+    sprintf(buffer + strlen(buffer), "Classifica finale\n");
+
+    for (int i = 0; i < MAX_PLAYERS_COUNT; i++) 
+    {
+        char* color = standingsPos == 1 ? gold :
+                       standingsPos == 2 ? silver :
+                       standingsPos == 3 ? bronze :
+                       neutral;
+
+        if (players[i].clientSocket != -1)
+        {
+            sprintf(buffer + strlen(buffer), "%s%d. %s: %d\033[0m\n", color, standingsPos++, players[i].name, players[i].points);
+        }
+    }
+
+    pthread_mutex_unlock(&playersMutex);
+
+    int result = write(clientSocket, &buffer, 1024);
 
     if (result < 0)
         error("ERROR writing on socket");
@@ -467,6 +514,10 @@ void parse_command(const char *input, int clientSocket)
     else if (strcmp(command, "gettime") == 0)
     {
         getTime(clientSocket);
+    }
+    else if (strcmp(command, "getstandings") == 0)
+    {
+        getStandings(clientSocket);
     }
     else
     {

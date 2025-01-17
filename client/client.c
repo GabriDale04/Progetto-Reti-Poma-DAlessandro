@@ -191,6 +191,23 @@ void getTime()
     }
 }
 
+void getStandings()
+{
+    sendCommand("getstandings");
+
+    char buffer[1024];
+
+    int result = read(clientSocket, &buffer, 1024);
+
+    if (result < 0)
+        error("ERROR reading from socket");
+    else
+    {
+        clearScreen();
+        printf("%s", buffer);
+    }
+}
+
 void mainloop(int clientSocket) {
     char buffer[256];
     int result;
@@ -233,6 +250,8 @@ void mainloop(int clientSocket) {
 
         usleep(250000);
     }
+
+    getStandings();
 }
 
 int main(int argc, char* argv[]) {
