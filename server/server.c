@@ -123,19 +123,32 @@ void createPlayer(int clientSocket, char *name)
     }
 }
 
+void disconnetPlayer(int playerIndex)
+{
+    if (playerIndex <= MAX_PLAYERS_COUNT)
+    {
+        pthread_mutex_lock(&playersMutex);
+        players[playerIndex].clientSocket = -1;
+        pthread_mutex_unlock(&playersMutex);
+    }
+}
+
 void removePlayer(int playerIndex)
 {
-    pthread_mutex_lock(&mapMutex);
-    map[players[playerIndex].posY][players[playerIndex].posX] = EMPTY_ITEM;
-    pthread_mutex_unlock(&mapMutex);
+    if (playerIndex <= MAX_PLAYERS_COUNT)
+    {
+        pthread_mutex_lock(&mapMutex);
+        map[players[playerIndex].posY][players[playerIndex].posX] = EMPTY_ITEM;
+        pthread_mutex_unlock(&mapMutex);
 
-    pthread_mutex_lock(&playersMutex);
-    players[playerIndex].clientSocket = -1;
-    players[playerIndex].name = "";
-    players[playerIndex].posX = 0;
-    players[playerIndex].posY = 0;
-    players[playerIndex].points = 0;
-    pthread_mutex_unlock(&playersMutex);
+        pthread_mutex_lock(&playersMutex);
+        players[playerIndex].clientSocket = -1;
+        players[playerIndex].name = "";
+        players[playerIndex].posX = 0;
+        players[playerIndex].posY = 0;
+        players[playerIndex].points = 0;
+        pthread_mutex_unlock(&playersMutex);
+    }
 }
 
 int connectedPlayers()
@@ -224,10 +237,10 @@ void getTime(int clientSocket)
         error("ERROR writing on socket");
 }
 
-int comparePlayerByPoints(const void* a, const void* b)
+int comparePlayerByPoints(const void *a, const void *b)
 {
-    Player* playerA = (Player*)a;
-    Player* playerB = (Player*)b;
+    Player *playerA = (Player *)a;
+    Player *playerB = (Player *)b;
 
     return playerB->points - playerA->points;
 }
@@ -235,7 +248,7 @@ int comparePlayerByPoints(const void* a, const void* b)
 void getStandings(int clientSocket)
 {
     char buffer[1024];
-    
+
     pthread_mutex_lock(&playersMutex);
 
     // Ordina i giocatori per punti utilizzando la funzione di comparison
@@ -250,12 +263,11 @@ void getStandings(int clientSocket)
 
     sprintf(buffer + strlen(buffer), "Classifica finale\n");
 
-    for (int i = 0; i < MAX_PLAYERS_COUNT; i++) 
+    for (int i = 0; i < MAX_PLAYERS_COUNT; i++)
     {
-        char* color = standingsPos == 1 ? gold :
-                       standingsPos == 2 ? silver :
-                       standingsPos == 3 ? bronze :
-                       neutral;
+        char *color = standingsPos == 1 ? gold : standingsPos == 2 ? silver
+                                             : standingsPos == 3   ? bronze
+                                                                   : neutral;
 
         if (players[i].clientSocket != -1)
         {
@@ -273,49 +285,52 @@ void getStandings(int clientSocket)
 
 void eatFruit(int playerIndex, int x, int y)
 {
-    int item = map[y][x];
-
-    if (item == APPLE_ITEM)
+    if (playerIndex <= MAX_PLAYERS_COUNT)
     {
-        map[y][x] = EMPTY_ITEM;
-        map[y][x + 1] = EMPTY_ITEM;
+        int item = map[y][x];
 
-        players[playerIndex].points += 1;
-    }
-    else if (item == APPLE_ITEM + 1)
-    {
-        map[y][x] = EMPTY_ITEM;
-        map[y][x - 1] = EMPTY_ITEM;
+        if (item == APPLE_ITEM)
+        {
+            map[y][x] = EMPTY_ITEM;
+            map[y][x + 1] = EMPTY_ITEM;
 
-        players[playerIndex].points += 1;
-    }
-    else if (item == BANANA_ITEM)
-    {
-        map[y][x] = EMPTY_ITEM;
-        map[y][x + 1] = EMPTY_ITEM;
+            players[playerIndex].points += 1;
+        }
+        else if (item == APPLE_ITEM + 1)
+        {
+            map[y][x] = EMPTY_ITEM;
+            map[y][x - 1] = EMPTY_ITEM;
 
-        players[playerIndex].points += 2;
-    }
-    else if (item == BANANA_ITEM + 1)
-    {
-        map[y][x] = EMPTY_ITEM;
-        map[y][x - 1] = EMPTY_ITEM;
+            players[playerIndex].points += 1;
+        }
+        else if (item == BANANA_ITEM)
+        {
+            map[y][x] = EMPTY_ITEM;
+            map[y][x + 1] = EMPTY_ITEM;
 
-        players[playerIndex].points += 2;
-    }
-    else if (item == GRAPE_ITEM)
-    {
-        map[y][x] = EMPTY_ITEM;
-        map[y][x + 1] = EMPTY_ITEM;
+            players[playerIndex].points += 2;
+        }
+        else if (item == BANANA_ITEM + 1)
+        {
+            map[y][x] = EMPTY_ITEM;
+            map[y][x - 1] = EMPTY_ITEM;
 
-        players[playerIndex].points += 3;
-    }
-    else if (item == GRAPE_ITEM + 1)
-    {
-        map[y][x] = EMPTY_ITEM;
-        map[y][x - 1] = EMPTY_ITEM;
+            players[playerIndex].points += 2;
+        }
+        else if (item == GRAPE_ITEM)
+        {
+            map[y][x] = EMPTY_ITEM;
+            map[y][x + 1] = EMPTY_ITEM;
 
-        players[playerIndex].points += 3;
+            players[playerIndex].points += 3;
+        }
+        else if (item == GRAPE_ITEM + 1)
+        {
+            map[y][x] = EMPTY_ITEM;
+            map[y][x - 1] = EMPTY_ITEM;
+
+            players[playerIndex].points += 3;
+        }
     }
 }
 
@@ -525,6 +540,42 @@ void parse_command(const char *input, int clientSocket)
     }
 }
 
+void generateFruits()
+{
+    int fruits[] = {APPLE_ITEM, BANANA_ITEM, GRAPE_ITEM};
+    srand(time(NULL));
+
+    pthread_mutex_lock(&mapMutex);
+    for (int i = 0; i < 10; i++)
+    {
+        int x = rand() % MAP_WIDTH;
+        int y = rand() % MAP_HEIGHT;
+
+        if (map[y][x] == 0 && x + 1 < MAP_WIDTH && map[y][x + 1] == 0)
+        {
+            int fruit = rand() % 3;
+            map[y][x] = fruits[fruit];
+            map[y][x + 1] = fruits[fruit] + 1;
+        }
+    }
+    pthread_mutex_unlock(&mapMutex);
+}
+
+void endGame()
+{
+    pthread_mutex_lock(&gameStateMutex);
+    if (inGame == true)
+    {
+        inGame = false;
+    }
+    pthread_mutex_unlock(&gameStateMutex);
+
+    sleep(1);
+
+    initializePlayers();
+    createMap();
+}
+
 void *playerThread(void *socket)
 {
     int *socketPtr = (unsigned int *)socket;
@@ -534,6 +585,8 @@ void *playerThread(void *socket)
 
     char buffer[256];
     int result;
+
+    int playerIndex = findPlayerIndex(clientSocket);
 
     while (1)
     {
@@ -575,21 +628,28 @@ void *playerThread(void *socket)
         parse_command(buffer, clientSocket);
     }
 
-    removePlayer(findPlayerIndex(clientSocket));
+    // removePlayer(findPlayerIndex(clientSocket));
+    disconnetPlayer(playerIndex);
     close(clientSocket);
 }
 
-void* timerThread()
+void *timerThread()
 {
     time_remaining = TIME;
 
     while (time_remaining > 0)
     {
         time_remaining--;
+
+        if(inGame == false){
+            time_remaining = 0;
+            break;
+        }
+
         sleep(1);
     }
 
-    inGame = false;
+    endGame();
 }
 
 void mainLoop(int serverSocket)
@@ -634,21 +694,13 @@ void mainLoop(int serverSocket)
 
         while (inGame) // game loop
         {
-            int fruits[] = {APPLE_ITEM, BANANA_ITEM, GRAPE_ITEM};
-            srand(time(NULL));
+            generateFruits();
 
-            // Genera ogni 10 secondi un po' di frutta
-            for (int i = 0; i < 10; i++)
+            // game end for unexpected disconnection
+            if (connectedPlayers() < MIN_PLAYERS_COUNT)
             {
-                int x = rand() % MAP_WIDTH;
-                int y = rand() % MAP_HEIGHT;
-
-                if (map[y][x] == 0 && x + 1 < MAP_WIDTH && map[y][x + 1] == 0)
-                {
-                    int fruit = rand() % 3;
-                    map[y][x] = fruits[fruit];
-                    map[y][x + 1] = fruits[fruit] + 1;
-                }
+                endGame();
+                break;
             }
 
             sleep(10);
