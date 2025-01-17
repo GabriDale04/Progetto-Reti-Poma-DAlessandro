@@ -75,6 +75,7 @@ void* readKeyThreadDelegate() {
 
 void setCursorPosition(int x, int y) {
     printf("\033[%d;%dH", x, y);
+    fflush(stdout);
 }
 
 void clearScreen() {
@@ -99,8 +100,6 @@ void printItem(int item) {
 }
 
 void printMap() {
-    setCursorPosition(0, 0);
-
     for (int r = 0; r < map_height; r++) {
         for (int c = 0; c < map_width; c++) {
             int item = map[r * map_width + c];
@@ -195,6 +194,7 @@ void mainloop(int clientSocket) {
 
     // game start
 
+    clearScreen();
     getMapDimension();
 
     pthread_t keyThread;
@@ -203,6 +203,7 @@ void mainloop(int clientSocket) {
     while (inGame) { // game loop
         pthread_mutex_lock(&lock);
 
+        getPoints();
         getMapMatrix();
 
         pthread_mutex_unlock(&lock);
@@ -250,7 +251,7 @@ int main(int argc, char* argv[]) {
     if (connect(clientSocket, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)
         error("ERROR connecting");
     else
-        printf("Waiting for game to start...");
+        printf("Waiting for game to start...\n");
 
     mainloop(clientSocket);
     close(clientSocket);
