@@ -21,6 +21,8 @@
 #define MAP_WIDTH 70
 #define MAP_HEIGHT 20
 
+#define TIME 15
+
 #define MAX_COMMAND_LEN 100
 #define MAX_ARG_LEN 100
 #define MAX_ARG_COUNT 10
@@ -31,6 +33,8 @@ pthread_mutex_t gameStateMutex = PTHREAD_MUTEX_INITIALIZER;
 
 bool inGame = false;
 int playersCount;
+
+int time_remaining;
 
 struct Player
 {
@@ -207,6 +211,14 @@ void getPoints(int clientSocket)
         }
 
     int result = write(clientSocket, &points, sizeof(int));
+
+    if (result < 0)
+        error("ERROR writing on socket");
+}
+
+void getTime(int clientSocket)
+{
+    int result = write(clientSocket, &time_remaining, sizeof(int));
 
     if (result < 0)
         error("ERROR writing on socket");
@@ -452,6 +464,10 @@ void parse_command(const char *input, int clientSocket)
     {
         getPoints(clientSocket);
     }
+    else if (strcmp(command, "gettime") == 0)
+    {
+        getTime(clientSocket);
+    }
     else
     {
         printf("Invalid command: %s\n", command);
@@ -512,6 +528,19 @@ void *playerThread(void *socket)
     close(clientSocket);
 }
 
+void* timerThread()
+{
+    time_remaining = TIME;
+
+    while (time_remaining > 0)
+    {
+        time_remaining--;
+        sleep(1);
+    }
+
+    inGame = false;
+}
+
 void mainLoop(int serverSocket)
 {
     struct sockaddr_in clientSocket;
@@ -548,6 +577,9 @@ void mainLoop(int serverSocket)
                 pthread_mutex_unlock(&gameStateMutex);
             }
         }
+
+        pthread_t timeThread;
+        pthread_create(&timeThread, NULL, &timerThread, NULL);
 
         while (inGame) // game loop
         {

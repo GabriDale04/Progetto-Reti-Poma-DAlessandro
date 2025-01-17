@@ -23,6 +23,8 @@ int map_width;
 int map_height;
 int* map;
 
+bool inGame = false;
+
 pthread_mutex_t lock;
 
 void error(const char* msg) {
@@ -164,13 +166,32 @@ void getPoints()
     }
     else
     {
-        setCursorPosition(0, 0);
         printf("Punti: %d\n", points);
     }
 }
 
+void getTime()
+{
+    sendCommand("gettime");
+
+    int time = 0;
+    int result = read(clientSocket, &time, sizeof(int));
+
+    if (result < 0)
+    {
+        error("ERROR reading from socket");
+    }
+    else
+    {
+        // Non togliere gli spazi: servono per pulire il buffer della console
+        printf("Tempo rimanente: %d     \n", time);
+
+        if (time == 0)
+            inGame = false;
+    }
+}
+
 void mainloop(int clientSocket) {
-    bool inGame = false;
     char buffer[256];
     int result;
 
@@ -203,7 +224,9 @@ void mainloop(int clientSocket) {
     while (inGame) { // game loop
         pthread_mutex_lock(&lock);
 
+        setCursorPosition(0, 0);
         getPoints();
+        getTime();
         getMapMatrix();
 
         pthread_mutex_unlock(&lock);
