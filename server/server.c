@@ -21,7 +21,7 @@
 #define MAP_WIDTH 70
 #define MAP_HEIGHT 20
 
-#define TIME 30
+#define DEFAULT_TIME 30
 
 #define MAX_COMMAND_LEN 100
 #define MAX_ARG_LEN 100
@@ -34,7 +34,8 @@ pthread_mutex_t gameStateMutex = PTHREAD_MUTEX_INITIALIZER;
 bool inGame = false;
 int playersCount;
 
-int time_remaining;
+int totalTime;
+int timeRemaining;
 
 typedef struct Player
 {
@@ -242,7 +243,7 @@ void getPoints(int clientSocket)
 
 void getTime(int clientSocket)
 {
-    int result = write(clientSocket, &time_remaining, sizeof(int));
+    int result = write(clientSocket, &timeRemaining, sizeof(int));
 
     if (result < 0)
         error("ERROR writing on socket");
@@ -543,7 +544,6 @@ void parse_command(const char *input, int clientSocket)
     }
     else if (strcmp(command, "setplayername") == 0)
     {
-        printf("Player name: %s\n", arguments[0]);
         setPlayerName(clientSocket, arguments[0]);
     }
     else
@@ -593,7 +593,7 @@ void *playerThread(void *socket)
     int *socketPtr = (unsigned int *)socket;
     int clientSocket = *socketPtr;
 
-    printf("Accepted new client\n");
+    // printf("Accepted new client\n");
 
     char buffer[256];
     int result;
@@ -635,27 +635,26 @@ void *playerThread(void *socket)
         }
 
         buffer[strcspn(buffer, "\n")] = 0; // Rimuovi il \n "newline" se presente
-        printf("Here is the message: %s\n", buffer);
+        // printf("Here is the message: %s\n", buffer);
 
         parse_command(buffer, clientSocket);
     }
 
-    // removePlayer(findPlayerIndex(clientSocket));
     disconnetPlayer(playerIndex);
     close(clientSocket);
 }
 
 void *timerThread()
 {
-    time_remaining = TIME;
+    timeRemaining = totalTime;
 
-    while (time_remaining > 0)
+    while (timeRemaining > 0)
     {
-        time_remaining--;
+        timeRemaining--;
 
         if (inGame == false)
         {
-            time_remaining = 0;
+            timeRemaining = 0;
             break;
         }
 
@@ -682,10 +681,11 @@ void mainLoop(int serverSocket)
 
     while (1) // main loop
     {
+        printf("Waiting for Players...\n");
+        printf("Connected Players: %d\n", countConnectedPlayers());
+
         while (!inGame && countConnectedPlayers() < playersCount) // accept loop
         {
-            printf("Connected Players: %d\n", countConnectedPlayers());
-
             int clientSocket = accept(serverSocket, (struct sockaddr *)&clientSocket, &clientSocketLength);
 
             if (clientSocket < 0)
@@ -698,6 +698,7 @@ void mainLoop(int serverSocket)
                 *newSocket = clientSocket;
 
                 createPlayer(clientSocket, "nome"); // capire se salvare il nome del giocatore sul server o no
+                printf("Connected Players: %d\n", countConnectedPlayers());
 
                 pthread_create(&clientThread, NULL, &playerThread, newSocket);
                 pthread_detach(clientThread);
@@ -710,6 +711,8 @@ void mainLoop(int serverSocket)
                 pthread_mutex_unlock(&gameStateMutex);
             }
         }
+
+        printf("\nStarting Game\n");
 
         pthread_t fruitThread;
         pthread_create(&fruitThread, NULL, &fruitGenerationThread, NULL);
@@ -725,17 +728,16 @@ void mainLoop(int serverSocket)
             if (countConnectedPlayers() < MIN_PLAYERS_COUNT)
             {
                 endGame();
+                printf("Game Ended\n\n");
                 break;
             }
-
-            sleep(1);
         }
     }
 }
 
 int main(int argc, char *argv[])
 {
-    int serverSocket, portNumber;
+    int serverSocket, portNumber, arg2;
     struct sockaddr_in serverAddress;
 
     if (argc < 2)
@@ -743,11 +745,19 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Sintassi del comando:\n\tserver [SERVER_PORT] [PLAYERS_PER_GAME](optional) [GAME_DURATION](optional)\n");
         exit(1);
     }
+    else
+    {
+        portNumber = atoi(argv[1]);
 
-    initializePlayers();
-    createMap();
+        if (portNumber < 1024 || portNumber > 65535)
+        {
+            fprintf(stderr, "ERROR port number out of range\n");
+            exit(1);
+        }
+    }
 
-    int arg2 = 0;
+    // Players per Game
+    arg2 = 0;
 
     if (argc >= 3)
     {
@@ -763,16 +773,20 @@ int main(int argc, char *argv[])
         playersCount = MIN_PLAYERS_COUNT;
     }
 
-    printf("Lobby: %d\n", playersCount);
+    // Game Duration
+    totalTime = DEFAULT_TIME;
 
+    if (argc >= 4)
+    {
+        totalTime = atoi(argv[3]);
+    }
+
+    // Server's Socket creation
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket < 0)
     {
         error("ERROR opening socket");
     }
-
-    portNumber = atoi(argv[1]);
-    printf("Listening on port %d\n", portNumber);
 
     bzero((char *)&serverAddress, sizeof(serverAddress));
     serverAddress.sin_family = AF_INET;
@@ -783,6 +797,12 @@ int main(int argc, char *argv[])
     {
         error("ERROR on binding");
     }
+
+    // Server Initialization
+    initializePlayers();
+    createMap();
+
+    printf("SERVER READY\nListen on port: %d - Player per Game: %d - Game Duration: %ds\n\n", portNumber, playersCount, totalTime);
 
     listen(serverSocket, MAX_PLAYERS_COUNT);
 

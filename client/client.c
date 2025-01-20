@@ -117,8 +117,7 @@ void printMap() {
     }
 }
 
-void setPlayerName()
-{
+void setPlayerName() {
     char* command = "setplayername,";
 
     size_t cmdSize = strlen(command) + strlen(playerName) + 1;
@@ -127,8 +126,6 @@ void setPlayerName()
     strcpy(newCommand, command);
     strcat(newCommand, playerName);
     newCommand[cmdSize - 1] = '\0';
-
-    printf("Resulting string: %s\n", newCommand);
 
     sendCommand(newCommand);
 
@@ -145,8 +142,7 @@ void getMapDimension() {
         error("ERROR reading from socket");
         free(dimension);
     }
-    else
-    {
+    else {
         map_width = dimension[0];
         map_height = dimension[1];
 
@@ -160,48 +156,40 @@ void getMapMatrix() {
     map = (int*)malloc(map_width * map_height * sizeof(int));
     int result = read(clientSocket, map, map_width * map_height * sizeof(int));
 
-    if (result < 0)
-    {
+    if (result < 0) {
         error("ERROR reading from socket");
         free(map);
     }
-    else
-    {
+    else {
         printMap();
         free(map);
     }
 }
 
-void getPoints()
-{
+void getPoints() {
     sendCommand("getpoints");
 
     int points = 0;
     int result = read(clientSocket, &points, sizeof(int));
 
-    if (result < 0)
-    {
+    if (result < 0) {
         error("ERROR reading from socket");
     }
-    else
-    {
+    else {
         printf("Punti: %d\n", points);
     }
 }
 
-void getTime()
-{
+void getTime() {
     sendCommand("gettime");
 
     int time = 0;
     int result = read(clientSocket, &time, sizeof(int));
 
-    if (result < 0)
-    {
+    if (result < 0) {
         error("ERROR reading from socket");
     }
-    else
-    {
+    else {
         // Non togliere gli spazi: servono per pulire il buffer della console
         printf("Tempo rimanente: %d     \n", time);
 
@@ -210,8 +198,7 @@ void getTime()
     }
 }
 
-void getStandings()
-{
+void getStandings() {
     sendCommand("getstandings");
 
     char buffer[1024];
@@ -220,8 +207,7 @@ void getStandings()
 
     if (result < 0)
         error("ERROR reading from socket");
-    else
-    {
+    else {
         clearScreen();
         printf("%s", buffer);
     }
@@ -241,7 +227,7 @@ void mainloop(int clientSocket) {
             error("ERROR reading from socket");
         }
         else if (result == 0) {
-            printf("Client disconnected\n");
+            printf("Server disconnected\n");
         }
 
         buffer[strcspn(buffer, "\n")] = 0; // Rimuovi il \n "newline" se presente
@@ -289,12 +275,13 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "Sintassi del comando:\n\tclient [SERVER_IP] [SERVER_PORT] [PLAYER_NAME]\n");
         exit(0);
     }
-    else {
-        server_ip = argv[1];
-        server_port = atoi(argv[2]);
-        playerName = argv[3];
-    }
+    
+    server_ip = argv[1];
+    server_port = atoi(argv[2]);
+    playerName = argv[3];
 
+    printf("CLIENT READY\nTrying to connect to address: %s, Port: %d, Player Name: %s\n\n", server_ip, server_port, playerName);
+    
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (socket < 0)
         error("ERROR opening socket");
@@ -310,10 +297,13 @@ int main(int argc, char* argv[]) {
     bcopy((char*)server->h_addr, (char*)&serv_addr.sin_addr.s_addr, server->h_length);
     serv_addr.sin_port = htons(server_port);
 
-    if (connect(clientSocket, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)
+    sleep(1);
+    if (connect(clientSocket, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
         error("ERROR connecting");
-    else
-        printf("Waiting for game to start...\n");
+        exit(1);
+    }
+    
+    printf("Connection Succeded\nWaiting for game to start...\n");
 
     mainloop(clientSocket);
     close(clientSocket);
