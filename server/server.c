@@ -547,8 +547,8 @@ void parse_command(const char *input, int clientSocket)
     }
     else if (strcmp(command, "setplayername") == 0)
     {
+        printf("Player name: %s\n", arguments[0]);
         setPlayerName(clientSocket, arguments[0]);
-        printf("Player name: %s", arguments[0]);
     }
     else
     {

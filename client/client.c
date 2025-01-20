@@ -126,6 +126,7 @@ void setPlayerName()
 
     strcpy(newCommand, command);
     strcat(newCommand, playerName);
+    newCommand[cmdSize - 1] = '\0';
 
     printf("Resulting string: %s\n", newCommand);
 
