@@ -665,6 +665,15 @@ void *timerThread()
     endGame();
 }
 
+void *fruitGenerationThread()
+{
+    while (inGame)
+    {
+        generateFruits();
+        sleep(10);
+    }
+}
+
 void mainLoop(int serverSocket)
 {
     struct sockaddr_in clientSocket;
@@ -702,13 +711,16 @@ void mainLoop(int serverSocket)
             }
         }
 
+        pthread_t fruitThread;
+        pthread_create(&fruitThread, NULL, &fruitGenerationThread, NULL);
+        pthread_detach(fruitThread);
+
         pthread_t timeThread;
         pthread_create(&timeThread, NULL, &timerThread, NULL);
+        pthread_detach(timeThread);
 
         while (inGame) // game loop
         {
-            generateFruits();
-
             // game end for unexpected disconnection
             if (countConnectedPlayers() < MIN_PLAYERS_COUNT)
             {
@@ -716,7 +728,7 @@ void mainLoop(int serverSocket)
                 break;
             }
 
-            sleep(10);
+            sleep(1);
         }
     }
 }
