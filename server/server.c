@@ -151,7 +151,7 @@ void removePlayer(int playerIndex)
     }
 }
 
-void setPlayerName(int clientSocket, char* name)
+void setPlayerName(int clientSocket, char *name)
 {
     pthread_mutex_lock(&playersMutex);
     for (int i = 0; i < MAX_PLAYERS_COUNT; i++)
@@ -507,22 +507,18 @@ void parse_command(const char *input, int clientSocket)
     // Parsing del comando e ricerca di una funzione appropriata per gestirlo
     if (strcmp(command, "moveleft") == 0)
     {
-        int distance = atoi(arguments[0]);
         moveLeft(clientSocket);
     }
     else if (strcmp(command, "moveright") == 0)
     {
-        int distance = atoi(arguments[0]);
         moveRight(clientSocket);
     }
     else if (strcmp(command, "moveup") == 0)
     {
-        int distance = atoi(arguments[0]);
         moveUp(clientSocket);
     }
     else if (strcmp(command, "movedown") == 0)
     {
-        int distance = atoi(arguments[0]);
         moveDown(clientSocket);
     }
     else if (strcmp(command, "getmapdimension") == 0)
@@ -657,7 +653,8 @@ void *timerThread()
     {
         time_remaining--;
 
-        if(inGame == false){
+        if (inGame == false)
+        {
             time_remaining = 0;
             break;
         }
