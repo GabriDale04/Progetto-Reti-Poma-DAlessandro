@@ -25,7 +25,7 @@
 
 #define MAX_COMMAND_LEN 100
 #define MAX_ARG_LEN 100
-#define MAX_ARG_COUNT 10
+#define MAX_ARG_COUNT 2
 
 pthread_mutex_t mapMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t playersMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -162,7 +162,7 @@ void setPlayerName(int clientSocket, char *name)
     pthread_mutex_unlock(&playersMutex);
 }
 
-int connectedPlayers()
+int countConnectedPlayers()
 {
     int count = 0;
 
@@ -673,9 +673,9 @@ void mainLoop(int serverSocket)
 
     while (1) // main loop
     {
-        while (!inGame && connectedPlayers() < playersCount) // accept loop
+        while (!inGame && countConnectedPlayers() < playersCount) // accept loop
         {
-            printf("Connected Players: %d\n", connectedPlayers());
+            printf("Connected Players: %d\n", countConnectedPlayers());
 
             int clientSocket = accept(serverSocket, (struct sockaddr *)&clientSocket, &clientSocketLength);
 
@@ -694,7 +694,7 @@ void mainLoop(int serverSocket)
                 pthread_detach(clientThread);
             }
 
-            if (connectedPlayers() == playersCount)
+            if (countConnectedPlayers() == playersCount)
             {
                 pthread_mutex_lock(&gameStateMutex);
                 inGame = true;
@@ -710,7 +710,7 @@ void mainLoop(int serverSocket)
             generateFruits();
 
             // game end for unexpected disconnection
-            if (connectedPlayers() < MIN_PLAYERS_COUNT)
+            if (countConnectedPlayers() < MIN_PLAYERS_COUNT)
             {
                 endGame();
                 break;
