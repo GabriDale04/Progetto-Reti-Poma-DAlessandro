@@ -18,6 +18,7 @@
 #define GRAPE_ITEM 7
 
 int clientSocket;
+char* playerName;
 
 int map_width;
 int map_height;
@@ -116,6 +117,23 @@ void printMap() {
     }
 }
 
+void setPlayerName()
+{
+    char* command = "setplayername,";
+
+    size_t cmdSize = strlen(command) + strlen(playerName) + 1;
+    char* newCommand = (char*)malloc(cmdSize);
+
+    strcpy(newCommand, command);
+    strcat(newCommand, playerName);
+
+    printf("Resulting string: %s\n", newCommand);
+
+    sendCommand(command);
+
+    free(newCommand);
+}
+
 void getMapDimension() {
     sendCommand("getmapdimension");
 
@@ -212,6 +230,8 @@ void mainloop(int clientSocket) {
     char buffer[256];
     int result;
 
+    setPlayerName();
+
     while (!inGame) { // connected waiting for start
         bzero(buffer, 256);
         result = read(clientSocket, buffer, 255);
@@ -263,7 +283,6 @@ int main(int argc, char* argv[]) {
 
     char* server_ip;
     int server_port;
-    char* player_name;
 
     if (argc < 4) {
         fprintf(stderr, "Sintassi del comando:\n\tclient [SERVER_IP] [SERVER_PORT] [PLAYER_NAME]\n");
@@ -272,7 +291,7 @@ int main(int argc, char* argv[]) {
     else {
         server_ip = argv[1];
         server_port = atoi(argv[2]);
-        player_name = argv[3];
+        playerName = argv[3];
     }
 
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);

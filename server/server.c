@@ -151,6 +151,17 @@ void removePlayer(int playerIndex)
     }
 }
 
+void setPlayerName(int clientSocket, char* name)
+{
+    pthread_mutex_lock(&playersMutex);
+    for (int i = 0; i < MAX_PLAYERS_COUNT; i++)
+    {
+        if (players[i].clientSocket == clientSocket)
+            players[i].name = name;
+    }
+    pthread_mutex_unlock(&playersMutex);
+}
+
 int connectedPlayers()
 {
     int count = 0;
@@ -533,6 +544,11 @@ void parse_command(const char *input, int clientSocket)
     else if (strcmp(command, "getstandings") == 0)
     {
         getStandings(clientSocket);
+    }
+    else if (strcmp(command, "setplayername") == 0)
+    {
+        setPlayerName(clientSocket, arguments[0]);
+        printf("Player name: %s", arguments[0]);
     }
     else
     {
