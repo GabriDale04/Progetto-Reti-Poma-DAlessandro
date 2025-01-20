@@ -280,7 +280,7 @@ int main(int argc, char* argv[]) {
     server_port = atoi(argv[2]);
     playerName = argv[3];
 
-    printf("CLIENT READY\nTrying to connect to address: %s, Port: %d, Player Name: %s\n\n", server_ip, server_port, playerName);
+    printf("CLIENT READY\nTrying to connect to server...\n\nAddress: %s\nPort: %d\nPlayer Name: %s\n\n", server_ip, server_port, playerName);
     
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (socket < 0)
