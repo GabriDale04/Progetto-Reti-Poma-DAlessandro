@@ -130,7 +130,7 @@ void setPlayerName()
 
     printf("Resulting string: %s\n", newCommand);
 
-    sendCommand(command);
+    sendCommand(newCommand);
 
     free(newCommand);
 }
