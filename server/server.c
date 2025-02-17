@@ -62,7 +62,7 @@ void initializePlayers()
     for (int i = 0; i < MAX_PLAYERS_COUNT; i++)
     {
         players[i].clientSocket = -1;
-        players[i].name = "";
+        players[i].name = NULL;
         players[i].posX = 0;
         players[i].posY = 0;
         players[i].points = 0;
@@ -103,7 +103,7 @@ void createPlayer(int clientSocket, char *name)
     {
         pthread_mutex_lock(&playersMutex);
         int i = 0;
-        while (i < sizeof(players) && players[i].name != "")
+        while (i < sizeof(players) && players[i].name != NULL)
         {
             i++;
         }
@@ -281,7 +281,7 @@ void getStandings(int clientSocket)
                                              : standingsPos == 3   ? bronze
                                                                    : neutral;
 
-        if (players[i].clientSocket != -1)
+        if (players[i].name != NULL)
         {
             sprintf(buffer + strlen(buffer), "%s%d. %s: %d\033[0m\n", color, standingsPos++, players[i].name, players[i].points);
         }
